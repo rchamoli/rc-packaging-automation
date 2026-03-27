@@ -22,9 +22,6 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Build API
-        run: dotnet publish api/api.csproj -c Release -o api-publish
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -44,10 +41,9 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "/"
-          api_location: "api-publish"
+          api_location: "api"
           output_location: ""
           skip_app_build: true
-          skip_api_build: true
 
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
