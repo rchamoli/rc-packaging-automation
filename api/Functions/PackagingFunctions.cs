@@ -9,7 +9,7 @@ using Company.Function.Utilities;
 namespace Company.Function;
 
 // Note: AuthorizationLevel.Anonymous is intentional — Azure Static Web Apps
-// handles authentication at the route level via staticwebapp.config.swa.json.
+// handles authentication at the route level via staticwebapp.config.json.
 // All /api/* routes require the "authenticated" role in the SWA config.
 
 public class PackagingFunctions

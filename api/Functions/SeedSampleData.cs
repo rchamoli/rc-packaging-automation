@@ -6,7 +6,7 @@
 //   1. Copy this file and rename the class/function (e.g. SeedProjectsData).
 //   2. Change the Route to "manage/seed-<your-feature>".
 //   3. Change the table name and entity shape to match your domain.
-//   4. Add a matching anonymous route in staticwebapp.config.swa.json.
+//   4. Add a matching anonymous route in staticwebapp.config.json.
 //   5. Add the new endpoint URL to the seedDemoData() array in index.html.
 //   6. Delete this sample file once you no longer need it.
 //
