@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packaging Automation | Nouryon</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#00A3E0', light: '#33B5E7', dark: '#003A70' },
+            accent: '#6D6E71',
+            neutral: {
+              50: '#F9FAFB',
+              100: '#F3F4F6',
+              200: '#E5E7EB',
+              500: '#6B7280',
+              700: '#374151',
+              900: '#111827'
+            }
+          },
+          fontFamily: {
+            heading: ['"DM Sans"', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+    </script>
+</head>
+<body class="font-body antialiased bg-neutral-50 text-neutral-700">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm fixed w-full z-50 border-b border-neutral-200">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center gap-3">
+                        <img src="/docs/assets/logo.jpg" alt="Nouryon Logo" class="h-8 w-auto">
+                        <span class="hidden sm:inline text-sm font-semibold text-neutral-900 font-heading">Packaging Automation</span>
+                    </a>
+                </div>
+                <!-- Desktop links -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#how-it-works" class="text-neutral-700 hover:text-primary transition text-sm font-medium">How It Works</a>
+                    <a href="#features" class="text-neutral-700 hover:text-primary transition text-sm font-medium">Features</a>
+                    <button id="seedBtn" class="border border-neutral-300 text-neutral-700 bg-white px-4 py-2 rounded-lg font-medium hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition text-sm">Seed Demo Data</button>
+                    <!-- LOGIN LINK — points to /app/ (protected route). SWA redirects unauthenticated users to Azure AD login. -->
+                    <a href="/app/" class="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/40 transition text-sm">Login</a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="flex md:hidden items-center">
+                    <button id="mobileMenuBtn" class="text-neutral-700 hover:text-primary transition text-sm font-medium px-3 py-2 rounded-lg hover:bg-neutral-100">
+                        Menu ▾
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile menu dialog -->
+    <dialog id="mobileMenuDialog" class="rounded-xl p-0 w-full max-w-sm backdrop:bg-black/50">
+        <div class="bg-white rounded-xl shadow-xl border border-neutral-200 p-6">
+            <div class="flex items-start justify-between gap-4 mb-6">
+                <h3 class="text-lg font-semibold text-neutral-900 font-heading">Menu</h3>
+                <button id="mobileMenuClose" class="text-neutral-500 hover:text-neutral-700" aria-label="Close">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 6l12 12M18 6L6 18"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <a href="#how-it-works" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm" onclick="document.getElementById('mobileMenuDialog').close()">How It Works</a>
+                <a href="#features" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm" onclick="document.getElementById('mobileMenuDialog').close()">Features</a>
+                <button id="seedBtnMobile" class="border border-neutral-300 text-neutral-700 bg-white px-4 py-2 rounded-lg font-medium hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition text-sm text-left">Seed Demo Data</button>
+                <a href="/app/" class="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/40 transition text-sm text-center" onclick="document.getElementById('mobileMenuDialog').close()">Login</a>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Hero Section -->
+    <section class="pt-24 pb-12">
+        <div class="max-w-7xl mx-auto px-6 py-10 space-y-12">
+            <div class="text-center max-w-3xl mx-auto">
+                <img src="/docs/assets/logo.jpg" alt="Nouryon Logo" class="h-10 w-auto mx-auto mb-6">
+                <h1 class="text-3xl md:text-4xl font-bold text-neutral-900 font-heading mb-4">
+                    Desktop App Packaging Automation
+                </h1>
+                <p class="text-lg text-neutral-700 mb-8">
+                    A standardized, repeatable workflow that packages desktop applications into Intune Win32 format and configures them automatically — replacing manual, error-prone steps with a single run.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/app/" class="bg-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
+                        Open Dashboard
+                    </a>
+                    <a href="#how-it-works" class="border border-neutral-300 text-neutral-700 bg-white px-6 py-3 rounded-lg font-medium hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-12 bg-white">
+        <div class="max-w-7xl mx-auto px-6 space-y-8">
+            <div class="text-center">
+                <h2 class="text-2xl font-bold text-neutral-900 font-heading">How It Works</h2>
+                <p class="text-neutral-500 mt-1 text-sm">From installer to Intune in one run</p>
+            </div>
+            <div class="max-w-3xl mx-auto space-y-6">
+                <div class="flex gap-4 items-start">
+                    <div class="flex-shrink-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                    <div>
+                        <h3 class="font-semibold text-neutral-900">Place installer &amp; metadata file</h3>
+                        <p class="text-neutral-700 text-sm mt-1">Drop the vendor installer (EXE, MSI, or ZIP) into a release folder and add a small metadata file that describes install commands, detection rules, and UAT group assignment.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="flex-shrink-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                    <div>
+                        <h3 class="font-semibold text-neutral-900">Run the packaging job</h3>
+                        <p class="text-neutral-700 text-sm mt-1">Start a new run from the dashboard. The system reads metadata, invokes the Microsoft Win32 Content Prep Tool, and produces the <code class="bg-neutral-100 px-1 rounded text-xs">.intunewin</code> artifact alongside logs.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="flex-shrink-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                    <div>
+                        <h3 class="font-semibold text-neutral-900">Automatic Intune configuration</h3>
+                        <p class="text-neutral-700 text-sm mt-1">The app is created in Intune with the correct install/uninstall commands, registry-based detection rules, dependencies, supersedence, and UAT group assignment — all from the metadata file.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-12">
+        <div class="max-w-7xl mx-auto px-6 space-y-8">
+            <div class="text-center">
+                <h2 class="text-2xl font-bold text-neutral-900 font-heading">Features</h2>
+                <p class="text-neutral-500 mt-1 text-sm">What the automation handles for you</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-base font-semibold text-neutral-900 font-heading mb-2">Standardized Packaging</h3>
+                    <p class="text-neutral-700 text-sm">Produces <code class="bg-neutral-100 px-1 rounded text-xs">.intunewin</code> artifacts consistently from EXE, MSI, or ZIP installers using the official Win32 Content Prep Tool.</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-base font-semibold text-neutral-900 font-heading mb-2">Metadata-Driven Config</h3>
+                    <p class="text-neutral-700 text-sm">One small metadata file per release captures install commands, detection rules, dependencies, supersedence, and UAT group — no manual Intune data entry.</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-base font-semibold text-neutral-900 font-heading mb-2">Automated Intune Setup</h3>
+                    <p class="text-neutral-700 text-sm">Creates the Win32 app in Intune, uploads the artifact, configures detection rules, sets dependencies and supersedence, and assigns to UAT — all in one run.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-neutral-900 text-white py-8">
+        <div class="max-w-7xl mx-auto px-6 text-center text-neutral-500 text-sm">
+            <p>&copy; 2026 Nouryon. Packaging Automation.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu dialog
+            var menuBtn = document.getElementById('mobileMenuBtn');
+            var menuDialog = document.getElementById('mobileMenuDialog');
+            var menuClose = document.getElementById('mobileMenuClose');
+            if (menuBtn && menuDialog) {
+                menuBtn.addEventListener('click', function() { menuDialog.showModal(); });
+            }
+            if (menuClose && menuDialog) {
+                menuClose.addEventListener('click', function() { menuDialog.close(); });
+            }
+            // Light-dismiss: close dialog when clicking the backdrop
+            if (menuDialog) {
+                menuDialog.addEventListener('click', function(e) {
+                    if (e.target === menuDialog) menuDialog.close();
+                });
+            }
+
+            // Seed demo data
+            function handleSeed(btn) {
+                if (!btn) return;
+                btn.addEventListener('click', async function() {
+                    var originalText = btn.textContent;
+                    btn.textContent = 'Seeding\u2026';
+                    btn.disabled = true;
+
+                    try {
+                        var res = await fetch('/api/demo/seed', { method: 'POST' });
+                        var data = await res.json();
+                        if (data.error) {
+                            btn.textContent = '\u26a0 ' + data.error;
+                        } else {
+                            btn.textContent = '\u2713 Seeded!';
+                        }
+                    } catch (e) {
+                        btn.textContent = '\u26a0 Network error';
+                    }
+                    // Close the mobile menu dialog if it is open, so navigation is not blocked
+                    if (menuDialog && menuDialog.open) {
+                        menuDialog.close();
+                    }
+                    setTimeout(function() { btn.textContent = originalText; btn.disabled = false; }, 3000);
+                });
+            }
+            handleSeed(document.getElementById('seedBtn'));
+            handleSeed(document.getElementById('seedBtnMobile'));
+        });
+    </script>
+</body>
+</html>

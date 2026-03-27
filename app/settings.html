@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | Packaging Automation</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#00A3E0', light: '#33B5E7', dark: '#003A70' },
+            accent: '#6D6E71',
+            neutral: {
+              50: '#F9FAFB',
+              100: '#F3F4F6',
+              200: '#E5E7EB',
+              500: '#6B7280',
+              700: '#374151',
+              900: '#111827'
+            }
+          },
+          fontFamily: {
+            heading: ['"DM Sans"', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+    </script>
+</head>
+<body class="font-body antialiased bg-neutral-50 text-neutral-700">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm fixed w-full z-50 border-b border-neutral-200">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/app/dashboard.html" class="flex items-center gap-3">
+                        <img src="/docs/assets/logo.jpg" alt="Nouryon Logo" class="h-8 w-auto">
+                        <span class="hidden sm:inline text-sm font-semibold text-neutral-900 font-heading">Packaging Automation</span>
+                    </a>
+                </div>
+                <!-- Desktop nav links -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/app/dashboard.html" class="text-neutral-700 hover:text-primary transition text-sm font-medium">Dashboard</a>
+                    <a href="/app/new-run.html" class="text-neutral-700 hover:text-primary transition text-sm font-medium">New Run</a>
+                    <a href="/app/runs.html" class="text-neutral-700 hover:text-primary transition text-sm font-medium">Runs</a>
+                    <a href="/app/settings.html" class="text-primary font-medium text-sm">Settings</a>
+                    <span id="userInfo" class="text-neutral-700 text-sm"></span>
+                    <a href="#" id="logoutLink"
+                       onclick="event.preventDefault(); window.location.href='/.auth/logout?post_logout_redirect_uri=%2F'"
+                       class="text-neutral-700 hover:text-primary transition text-sm font-medium">Logout</a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="flex md:hidden items-center">
+                    <button id="mobileMenuBtn" class="text-neutral-700 hover:text-primary transition text-sm font-medium px-3 py-2 rounded-lg hover:bg-neutral-100">
+                        Menu ▾
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile menu dialog -->
+    <dialog id="mobileMenuDialog" class="rounded-xl p-0 w-full max-w-sm backdrop:bg-black/50">
+        <div class="bg-white rounded-xl shadow-xl border border-neutral-200 p-6">
+            <div class="flex items-start justify-between gap-4 mb-6">
+                <h3 class="text-lg font-semibold text-neutral-900 font-heading">Menu</h3>
+                <button id="mobileMenuClose" class="text-neutral-500 hover:text-neutral-700" aria-label="Close">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 6l12 12M18 6L6 18"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <a href="/app/dashboard.html" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Dashboard</a>
+                <a href="/app/new-run.html" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">New Run</a>
+                <a href="/app/runs.html" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Runs</a>
+                <a href="/app/settings.html" class="block px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm">Settings</a>
+                <hr class="border-neutral-200">
+                <span id="userInfoMobile" class="px-3 py-2 text-neutral-500 text-sm"></span>
+                <a href="#" id="logoutLinkMobile"
+                   onclick="event.preventDefault(); window.location.href='/.auth/logout?post_logout_redirect_uri=%2F'"
+                   class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Logout</a>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Main Content -->
+    <main class="pt-24">
+        <div class="max-w-7xl mx-auto px-6 py-8 space-y-6">
+            <!-- Page Header -->
+            <div>
+                <h1 class="text-2xl font-bold text-neutral-900 font-heading">Settings &amp; Help</h1>
+                <p class="text-neutral-500 mt-1 text-sm">Reference guide for metadata configuration and tool setup</p>
+            </div>
+
+            <!-- Two-column layout on lg -->
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Left sub-nav (sticky on lg) -->
+                <div class="lg:w-56 flex-shrink-0">
+                    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 lg:sticky lg:top-24">
+                        <h2 class="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">On this page</h2>
+                        <div class="flex flex-col space-y-1">
+                            <a href="#metadata-schema" class="block px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm">Metadata Schema</a>
+                            <a href="#registry-example" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Registry Example</a>
+                            <a href="#msi-example" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">MSI Example</a>
+                            <a href="#dependencies" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Dependencies</a>
+                            <a href="#tool-path" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Tool Path</a>
+                            <a href="#naming" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Naming Conventions</a>
+                            <a href="#notification-settings" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Notifications</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right content cards -->
+                <div class="flex-1 min-w-0 space-y-6">
+
+                    <!-- Metadata Schema -->
+                    <div id="metadata-schema" class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 scroll-mt-24">
+                        <h2 class="text-lg font-semibold text-neutral-900 font-heading mb-4">Metadata Schema</h2>
+                        <p class="text-neutral-700 text-sm mb-4">
+                            Every release folder must contain a <code class="bg-neutral-100 text-neutral-900 px-1.5 py-0.5 rounded text-xs font-mono">release-metadata.json</code> file.
+                            The packaging tool reads this file to determine how to package, detect, and deploy the application in Intune.
+                        </p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead>
+                                    <tr class="border-b border-neutral-200 text-xs font-semibold text-neutral-500 uppercase tracking-wider bg-neutral-50">
+                                        <th class="px-4 py-3">Field</th>
+                                        <th class="px-4 py-3">Required</th>
+                                        <th class="px-4 py-3">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-100">
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">applicationName</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Display name of the application (e.g. "Nouryon Safety Suite")</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">anNumber</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Nouryon AN tracking number (e.g. "AN-12345")</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">releaseVersion</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Version string for this release (e.g. "2.1.0")</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">installerType</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Type of installer: <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"EXE"</code> or <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"MSI"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">installCommand</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Silent install command line (e.g. <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">setup.exe /s</code>)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">uninstallCommand</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Silent uninstall command line</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">detectionType</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">How Intune detects installation: <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"registry"</code> or <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"msi"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">registryHive</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-700">Conditional</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Registry hive for detection (e.g. <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"HKLM"</code>). Required when <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">detectionType</code> is <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"registry"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">registryPath</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-700">Conditional</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Full registry key path for detection. Required when <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">detectionType</code> is <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"registry"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">registryArchitecture</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-700">Conditional</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Registry architecture: <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"x64"</code> or <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"x86"</code>. Required for registry detection</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">registryRuleType</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-700">Conditional</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">How to evaluate the registry value: <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"string"</code>, <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"version"</code>, or <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"integer"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">registryValueName</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-700">Conditional</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Registry value name to check (e.g. <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"DisplayVersion"</code>)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">registryExpectedValue</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-700">Conditional</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Expected value to match for detection (e.g. <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"2.1.0"</code>)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">msiProductCode</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-700">Conditional</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">MSI product code GUID. Required when <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">installerType</code> is <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"MSI"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">uatGroup</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Azure AD group name or GUID for UAT assignment (e.g. <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"UAT-NouryonSafetySuite"</code>)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">dependencies</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Comma-separated list of dependencies in <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"AppName|Version"</code> format, or <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"none"</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-3 font-mono text-xs text-neutral-900">supersedence</td>
+                                        <td class="px-4 py-3"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Yes</span></td>
+                                        <td class="px-4 py-3 text-neutral-700">Comma-separated list of apps this supersedes in <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"AppName|Version"</code> format, or <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"none"</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Registry Detection Example -->
+                    <div id="registry-example" class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 scroll-mt-24">
+                        <h2 class="text-lg font-semibold text-neutral-900 font-heading mb-2">Example: Registry Detection</h2>
+                        <p class="text-neutral-500 text-sm mb-4">
+                            Use this format when the installer writes a registry key that can be checked for version or existence.
+                        </p>
+                        <pre class="bg-neutral-900 text-neutral-100 rounded-lg p-4 overflow-x-auto text-xs leading-relaxed"><code>{
+  "applicationName": "Nouryon Safety Suite",
+  "anNumber": "AN-12345",
+  "releaseVersion": "2.1.0",
+  "installerType": "EXE",
+  "installCommand": "NouryonSafetySuite-2.1.0-Setup.exe /s",
+  "uninstallCommand": "NouryonSafetySuite-2.1.0-Setup.exe /s /uninstall",
+  "detectionType": "registry",
+  "registryHive": "HKLM",
+  "registryPath": "SOFTWARE\\Nouryon\\SafetySuite",
+  "registryArchitecture": "x64",
+  "registryRuleType": "version",
+  "registryValueName": "DisplayVersion",
+  "registryExpectedValue": "2.1.0",
+  "uatGroup": "UAT-NouryonSafetySuite",
+  "dependencies": "none",
+  "supersedence": "Nouryon Safety Suite|2.0.0"
+}</code></pre>
+                    </div>
+
+                    <!-- MSI Detection Example -->
+                    <div id="msi-example" class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 scroll-mt-24">
+                        <h2 class="text-lg font-semibold text-neutral-900 font-heading mb-2">Example: MSI Product Code Detection</h2>
+                        <p class="text-neutral-500 text-sm mb-4">
+                            Use this format for MSI installers where Intune can detect the app by its product code GUID.
+                        </p>
+                        <pre class="bg-neutral-900 text-neutral-100 rounded-lg p-4 overflow-x-auto text-xs leading-relaxed"><code>{
+  "applicationName": "ChemTracker Desktop",
+  "anNumber": "AN-67890",
+  "releaseVersion": "3.0.1",
+  "installerType": "MSI",
+  "installCommand": "msiexec /i ChemTracker-3.0.1.msi /qn",
+  "uninstallCommand": "msiexec /x {B1234567-ABCD-1234-EFGH-123456789012} /qn",
+  "detectionType": "msi",
+  "msiProductCode": "{B1234567-ABCD-1234-EFGH-123456789012}",
+  "uatGroup": "UAT-ChemTracker",
+  "dependencies": "Nouryon Safety Suite|2.1.0",
+  "supersedence": "ChemTracker Desktop|2.9.0,ChemTracker Desktop|2.8.0"
+}</code></pre>
+                    </div>
+
+                    <!-- Dependencies & Supersedence -->
+                    <div id="dependencies" class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 scroll-mt-24">
+                        <h2 class="text-lg font-semibold text-neutral-900 font-heading mb-4">Dependencies &amp; Supersedence</h2>
+                        <p class="text-neutral-700 text-sm mb-3">
+                            Dependencies and supersedence relationships are identified by <strong>App Name + Version</strong>.
+                            The system resolves each reference by looking up previous packaging runs in the IntuneAppRefs table.
+                        </p>
+                        <div class="space-y-4">
+                            <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-2">Format</h3>
+                                <p class="text-neutral-700 text-sm mb-2">
+                                    Use the pipe-separated format <code class="bg-neutral-100 text-neutral-900 px-1.5 py-0.5 rounded text-xs font-mono">AppName|Version</code> for each reference. Separate multiple entries with commas.
+                                </p>
+                                <pre class="bg-neutral-900 text-neutral-100 rounded-lg p-3 overflow-x-auto text-xs leading-relaxed"><code>// Single dependency
+"dependencies": "Nouryon Safety Suite|2.1.0"
+
+// Multiple dependencies
+"dependencies": "Nouryon Safety Suite|2.1.0,Lab Inventory Manager|1.5.0"
+
+// No dependencies
+"dependencies": "none"
+
+// Single supersedence
+"supersedence": "ChemTracker Desktop|2.9.0"
+
+// Multiple supersedence entries
+"supersedence": "ChemTracker Desktop|2.9.0,ChemTracker Desktop|2.8.0"</code></pre>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <p class="text-blue-800 text-sm">
+                                    <strong>How resolution works:</strong> When Intune app creation runs, each <code class="bg-blue-100 px-1 py-0.5 rounded text-xs font-mono">AppName|Version</code> reference is looked up in the IntuneAppRefs table (keyed by normalized app name + version). The target app must have been previously packaged and created in Intune for the relationship to be established.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tool Path Configuration -->
+                    <div id="tool-path" class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 scroll-mt-24">
+                        <h2 class="text-lg font-semibold text-neutral-900 font-heading mb-4">Tool Path Configuration</h2>
+                        <p class="text-neutral-700 text-sm mb-4">
+                            The packaging service uses Microsoft's <strong>Win32 Content Prep Tool</strong> (<code class="bg-neutral-100 text-neutral-900 px-1.5 py-0.5 rounded text-xs font-mono">IntuneWinAppUtil.exe</code>) to convert application installers into the <code class="bg-neutral-100 text-neutral-900 px-1.5 py-0.5 rounded text-xs font-mono">.intunewin</code> format required by Intune.
+                        </p>
+                        <div class="space-y-4">
+                            <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-2">Environment Variables</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-sm">
+                                        <thead>
+                                            <tr class="border-b border-neutral-200 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                                                <th class="px-4 py-2">Variable</th>
+                                                <th class="px-4 py-2">Default</th>
+                                                <th class="px-4 py-2">Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-neutral-100">
+                                            <tr>
+                                                <td class="px-4 py-2 font-mono text-xs text-neutral-900">WIN32_PREP_TOOL_PATH</td>
+                                                <td class="px-4 py-2 text-neutral-500 text-xs italic">None</td>
+                                                <td class="px-4 py-2 text-neutral-700">Full path to <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">IntuneWinAppUtil.exe</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 font-mono text-xs text-neutral-900">WIN32_PREP_TOOL_TIMEOUT_SECONDS</td>
+                                                <td class="px-4 py-2 font-mono text-xs text-neutral-900">300</td>
+                                                <td class="px-4 py-2 text-neutral-700">Maximum time (seconds) to wait for the tool to complete</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-2">Tool Arguments</h3>
+                                <p class="text-neutral-700 text-sm mb-2">The tool is invoked with these arguments:</p>
+                                <pre class="bg-neutral-900 text-neutral-100 rounded-lg p-3 overflow-x-auto text-xs leading-relaxed"><code>IntuneWinAppUtil.exe -c "{sourceFolder}" -s "{sourceFolder}" -o "{sourceFolder}/output" -q</code></pre>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-2">Common Errors</h3>
+                                <div class="space-y-2">
+                                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                                        <p class="text-red-800 text-sm font-medium">WIN32_PREP_TOOL_PATH is not configured</p>
+                                        <p class="text-red-700 text-sm mt-1">The environment variable is missing or empty. Set <code class="bg-red-100 px-1 py-0.5 rounded text-xs font-mono">WIN32_PREP_TOOL_PATH</code> in <code class="bg-red-100 px-1 py-0.5 rounded text-xs font-mono">local.settings.json</code> (local dev) or in your Azure Functions app settings (production).</p>
+                                    </div>
+                                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                                        <p class="text-red-800 text-sm font-medium">Tool timed out after 300 seconds</p>
+                                        <p class="text-red-700 text-sm mt-1">The packaging tool did not finish within the allowed time. This may happen with very large installers. Increase <code class="bg-red-100 px-1 py-0.5 rounded text-xs font-mono">WIN32_PREP_TOOL_TIMEOUT_SECONDS</code> or check the source folder for issues.</p>
+                                    </div>
+                                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                                        <p class="text-red-800 text-sm font-medium">Tool exited with code 1</p>
+                                        <p class="text-red-700 text-sm mt-1">The Content Prep Tool returned a non-zero exit code. Check the run log for stdout/stderr output from the tool. Common causes: missing installer file, insufficient permissions, or corrupted source files.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Naming Conventions -->
+                    <div id="naming" class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 scroll-mt-24">
+                        <h2 class="text-lg font-semibold text-neutral-900 font-heading mb-4">Naming Conventions</h2>
+                        <p class="text-neutral-700 text-sm mb-4">
+                            The system normalizes application names for internal storage keys and file paths. Understanding this helps when troubleshooting or browsing storage directly.
+                        </p>
+                        <div class="space-y-4">
+                            <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-2">Normalization Rules</h3>
+                                <ul class="list-disc list-inside text-neutral-700 text-sm space-y-1">
+                                    <li>Application names are converted to <strong>lowercase</strong></li>
+                                    <li>Spaces are replaced with <strong>hyphens</strong></li>
+                                    <li>Example: <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">"Nouryon Safety Suite"</code> → <code class="bg-neutral-100 px-1 py-0.5 rounded text-xs font-mono">nouryon-safety-suite</code></li>
+                                </ul>
+                            </div>
+                            <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-200">
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-2">Storage Paths</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-sm">
+                                        <thead>
+                                            <tr class="border-b border-neutral-200 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                                                <th class="px-4 py-2">Resource</th>
+                                                <th class="px-4 py-2">Path Pattern</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-neutral-100">
+                                            <tr>
+                                                <td class="px-4 py-2 text-neutral-700">Run logs</td>
+                                                <td class="px-4 py-2 font-mono text-xs text-neutral-900">packaging-logs/{normalized-name}/{runId}.log</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 text-neutral-700">Artifacts</td>
+                                                <td class="px-4 py-2 font-mono text-xs text-neutral-900">artifacts/{normalized-name}/{runId}/{filename}.intunewin</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 text-neutral-700">Table partition key</td>
+                                                <td class="px-4 py-2 font-mono text-xs text-neutral-900">{normalized-name}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-4 py-2 text-neutral-700">Table row key</td>
+                                                <td class="px-4 py-2 font-mono text-xs text-neutral-900">{version}-{runId}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings -->
+                    <div id="notification-settings" class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 scroll-mt-24">
+                        <h2 class="text-lg font-semibold text-neutral-900 font-heading mb-4">Notification Settings</h2>
+                        <p class="text-neutral-500 text-sm mb-4">Configure email and Teams notifications for packaging run completions. Only admins can save changes.</p>
+                        <div id="notifLoadingState" class="text-center py-4">
+                            <p class="text-neutral-500 text-sm">Loading preferences...</p>
+                        </div>
+                        <form id="notifForm" class="hidden space-y-6">
+                            <div>
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-3">Teams Webhook</h3>
+                                <label class="block text-sm text-neutral-700 mb-1" for="teamsWebhookUrl">Webhook URL</label>
+                                <input type="url" id="teamsWebhookUrl" placeholder="https://outlook.office.com/webhook/..." class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary">
+                                <div class="flex items-center gap-6 mt-3">
+                                    <label class="flex items-center gap-2 text-sm text-neutral-700">
+                                        <input type="checkbox" id="teamsOnSuccess" class="rounded border-neutral-300 text-primary focus:ring-primary/40">
+                                        Notify on success
+                                    </label>
+                                    <label class="flex items-center gap-2 text-sm text-neutral-700">
+                                        <input type="checkbox" id="teamsOnFailure" class="rounded border-neutral-300 text-primary focus:ring-primary/40">
+                                        Notify on failure
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-3">Email (SendGrid)</h3>
+                                <label class="block text-sm text-neutral-700 mb-1" for="emailAddress">Recipient email</label>
+                                <input type="email" id="emailAddress" placeholder="team@nouryon.com" class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary">
+                                <div class="flex items-center gap-6 mt-3">
+                                    <label class="flex items-center gap-2 text-sm text-neutral-700">
+                                        <input type="checkbox" id="emailOnSuccess" class="rounded border-neutral-300 text-primary focus:ring-primary/40">
+                                        Notify on success
+                                    </label>
+                                    <label class="flex items-center gap-2 text-sm text-neutral-700">
+                                        <input type="checkbox" id="emailOnFailure" class="rounded border-neutral-300 text-primary focus:ring-primary/40">
+                                        Notify on failure
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <button type="submit" id="notifSaveBtn" class="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/40 transition text-sm">Save Preferences</button>
+                                <span id="notifSaveStatus" class="text-sm hidden"></span>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-neutral-900 text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-6 text-center text-neutral-500 text-sm">
+            <p>&copy; 2026 Nouryon. Packaging Automation.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu dialog
+        document.addEventListener('DOMContentLoaded', function() {
+            var menuBtn = document.getElementById('mobileMenuBtn');
+            var menuDialog = document.getElementById('mobileMenuDialog');
+            var menuClose = document.getElementById('mobileMenuClose');
+            if (menuBtn && menuDialog) {
+                menuBtn.addEventListener('click', function() { menuDialog.showModal(); });
+            }
+            if (menuClose && menuDialog) {
+                menuClose.addEventListener('click', function() { menuDialog.close(); });
+            }
+            // Light-dismiss: close dialog when clicking the backdrop
+            if (menuDialog) {
+                menuDialog.addEventListener('click', function(e) {
+                    if (e.target === menuDialog) menuDialog.close();
+                });
+            }
+        });
+    </script>
+    <script type="module" src="app.js"></script>
+    <script type="module" src="settings.js"></script>
+</body>
+</html>

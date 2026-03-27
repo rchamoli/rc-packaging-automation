@@ -1,0 +1,4 @@
+userId,email,displayName,roles,description
+user-packager,packager@nouryon.com,Kai Patel,"anonymous,authenticated",IT packaging engineer who runs Win32 Content Prep Tool and uploads .intunewin artifacts
+user-appowner,appowner@nouryon.com,Lisa van der Berg,"anonymous,authenticated,manager",Application owner who approves packaging runs and reviews Intune app configuration
+user-qa,qa@nouryon.com,Sam Okoye,"anonymous,authenticated",QA tester who validates packaged apps against detection rules and UAT group assignment

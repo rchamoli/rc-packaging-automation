@@ -1,0 +1,46 @@
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Shell scripts must use LF line endings (Linux/macOS)
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+
+# Docker and container files must use LF
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+
+# DevContainer configuration
+devcontainer.json text eol=lf
+
+# Config files
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.xml text eol=lf
+*.config text eol=lf
+
+# Source code
+*.cs text eol=lf
+*.csproj text eol=lf
+*.sln text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+
+# Binary files - don't modify
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary

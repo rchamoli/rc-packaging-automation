@@ -1,0 +1,15 @@
+{
+  "name": "agentic-engineering-v2",
+  "private": true,
+  "scripts": {
+    "generate-dev-config": "node scripts/generate-dev-config.js",
+    "prebuild": "npm run generate-dev-config",
+    "build": "npx tsc -p tsconfig.frontend.json",
+    "build:frontend": "npm run generate-dev-config && npx tsc -p tsconfig.frontend.json",
+    "prewatch:frontend": "npm run generate-dev-config",
+    "watch:frontend": "npx tsc -p tsconfig.frontend.json --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

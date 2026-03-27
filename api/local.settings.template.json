@@ -1,0 +1,28 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "STORAGE": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;",
+    "GRAPH_TENANT_ID": "",
+    "GRAPH_CLIENT_ID": "",
+    "GRAPH_CLIENT_SECRET": "",
+    "SENDGRID_API_KEY": "",
+    "SENDGRID_FROM_EMAIL": "noreply@packaging.local",
+    "TEAMS_WEBHOOK_URL": "",
+    "ROLE_ADMIN_GROUP_ID": "",
+    "ROLE_PACKAGER_GROUP_ID": ""
+  },
+  "_comments": {
+    "AzureWebJobsStorage": "Required by Functions runtime. Use 'UseDevelopmentStorage=true' for Azurite.",
+    "STORAGE": "Connection string for Table/Blob storage. For local dev with Azurite, use the full connection string, this is publicly known.",
+    "GRAPH_TENANT_ID": "Azure AD tenant ID for Microsoft Graph API access (required for Intune app creation).",
+    "GRAPH_CLIENT_ID": "App registration client ID for Microsoft Graph API access.",
+    "GRAPH_CLIENT_SECRET": "App registration client secret for Microsoft Graph API access.",
+    "SENDGRID_API_KEY": "Optional: SendGrid API key for email notifications on run completion.",
+    "SENDGRID_FROM_EMAIL": "Sender email address for SendGrid notifications.",
+    "TEAMS_WEBHOOK_URL": "Optional: Teams incoming webhook URL for run completion notifications.",
+    "ROLE_ADMIN_GROUP_ID": "Azure AD security group object ID mapped to the 'admin' app role.",
+    "ROLE_PACKAGER_GROUP_ID": "Azure AD security group object ID mapped to the 'packager' app role."
+  }
+}

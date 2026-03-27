@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Run | Packaging Automation</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#00A3E0', light: '#33B5E7', dark: '#003A70' },
+            accent: '#6D6E71',
+            neutral: {
+              50: '#F9FAFB',
+              100: '#F3F4F6',
+              200: '#E5E7EB',
+              500: '#6B7280',
+              700: '#374151',
+              900: '#111827'
+            }
+          },
+          fontFamily: {
+            heading: ['"DM Sans"', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+    </script>
+</head>
+<body class="font-body antialiased bg-neutral-50 text-neutral-700">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm fixed w-full z-50 border-b border-neutral-200">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/app/dashboard.html" class="flex items-center gap-3">
+                        <img src="/docs/assets/logo.jpg" alt="Nouryon Logo" class="h-8 w-auto">
+                        <span class="hidden sm:inline text-sm font-semibold text-neutral-900 font-heading">Packaging Automation</span>
+                    </a>
+                </div>
+                <!-- Desktop nav links -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/app/dashboard.html" class="text-neutral-700 hover:text-primary transition text-sm font-medium">Dashboard</a>
+                    <a href="/app/new-run.html" class="text-primary font-medium text-sm">New Run</a>
+                    <a href="/app/runs.html" class="text-neutral-700 hover:text-primary transition text-sm font-medium">Runs</a>
+                    <a href="/app/settings.html" class="text-neutral-700 hover:text-primary transition text-sm font-medium">Settings</a>
+                    <span id="userInfo" class="text-neutral-700 text-sm"></span>
+                    <a href="#" id="logoutLink"
+                       onclick="event.preventDefault(); window.location.href='/.auth/logout?post_logout_redirect_uri=%2F'"
+                       class="text-neutral-700 hover:text-primary transition text-sm font-medium">Logout</a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="flex md:hidden items-center">
+                    <button id="mobileMenuBtn" class="text-neutral-700 hover:text-primary transition text-sm font-medium px-3 py-2 rounded-lg hover:bg-neutral-100">
+                        Menu ▾
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile menu dialog -->
+    <dialog id="mobileMenuDialog" class="rounded-xl p-0 w-full max-w-sm backdrop:bg-black/50">
+        <div class="bg-white rounded-xl shadow-xl border border-neutral-200 p-6">
+            <div class="flex items-start justify-between gap-4 mb-6">
+                <h3 class="text-lg font-semibold text-neutral-900 font-heading">Menu</h3>
+                <button id="mobileMenuClose" class="text-neutral-500 hover:text-neutral-700" aria-label="Close">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 6l12 12M18 6L6 18"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <a href="/app/dashboard.html" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Dashboard</a>
+                <a href="/app/new-run.html" class="block px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium text-sm">New Run</a>
+                <a href="/app/runs.html" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Runs</a>
+                <a href="/app/settings.html" class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Settings</a>
+                <hr class="border-neutral-200">
+                <span id="userInfoMobile" class="px-3 py-2 text-neutral-500 text-sm"></span>
+                <a href="#" id="logoutLinkMobile"
+                   onclick="event.preventDefault(); window.location.href='/.auth/logout?post_logout_redirect_uri=%2F'"
+                   class="block px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-100 transition text-sm">Logout</a>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Main Content -->
+    <main class="pt-24">
+        <div class="max-w-2xl mx-auto px-6 py-8 space-y-6">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-neutral-900 font-heading">New Packaging Run</h1>
+                    <p class="text-neutral-500 mt-1 text-sm">Configure and start a desktop app packaging job</p>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                <form id="newRunForm" novalidate>
+                    <div class="space-y-4">
+                        <!-- Source Type -->
+                        <div>
+                            <label for="sourceType" class="block text-sm font-medium text-neutral-700 mb-1">Source Type</label>
+                            <select id="sourceType"
+                                    class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+                                <option value="">Select a source type…</option>
+                                <option value="fileshare">File Share</option>
+                                <option value="blob">Azure Blob Storage</option>
+                                <option value="local-upload">Local Upload</option>
+                            </select>
+                            <p id="sourceTypeError" class="mt-1 text-xs text-red-600 hidden">Please select a source type.</p>
+                        </div>
+
+                        <!-- Release Folder Path (shown for fileshare/blob) -->
+                        <div id="folderPathSection">
+                            <label for="releaseFolderPath" class="block text-sm font-medium text-neutral-700 mb-1">Release Folder Path</label>
+                            <input id="releaseFolderPath" type="text"
+                                   placeholder="e.g. \\\\server\\share\\AppName\\1.0.0"
+                                   class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                            <p class="mt-1 text-xs text-neutral-500">Full path to the folder containing the installer and metadata file</p>
+                            <p id="releaseFolderPathError" class="mt-1 text-xs text-red-600 hidden">Release folder path is required.</p>
+                            <p id="pathFormatError" class="mt-1 text-xs text-red-600 hidden"></p>
+                        </div>
+
+                        <!-- File Upload Section (shown for local-upload) -->
+                        <div id="uploadSection" class="hidden">
+                            <label class="block text-sm font-medium text-neutral-700 mb-1">Upload Files</label>
+                            <div id="dropZone" class="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary transition cursor-pointer">
+                                <input type="file" id="fileInput" multiple accept=".exe,.msi,.zip,.json" class="hidden" />
+                                <svg class="mx-auto h-10 w-10 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" x2="12" y1="3" y2="15"></line>
+                                </svg>
+                                <p class="mt-2 text-sm text-neutral-600">
+                                    <span class="text-primary font-medium">Click to browse</span> or drag and drop
+                                </p>
+                                <p class="mt-1 text-xs text-neutral-500">
+                                    EXE, MSI, ZIP, or JSON files (max 500 MB total)
+                                </p>
+                            </div>
+                            <div id="fileList" class="mt-3 space-y-2 hidden"></div>
+                            <p id="uploadError" class="mt-1 text-xs text-red-600 hidden"></p>
+                            <!-- Upload progress -->
+                            <div id="uploadProgress" class="hidden mt-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 bg-neutral-200 rounded-full h-2">
+                                        <div id="uploadProgressBar" class="bg-primary h-2 rounded-full transition-all" style="width: 0%"></div>
+                                    </div>
+                                    <span id="uploadProgressText" class="text-xs text-neutral-500">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Create Intune App Toggle -->
+                        <div class="flex items-center gap-3 pt-2">
+                            <button type="button" id="createIntuneAppToggle" role="switch" aria-checked="true"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-primary transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/40">
+                                <span class="pointer-events-none inline-block h-5 w-5 translate-x-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                            </button>
+                            <label for="createIntuneAppToggle" class="text-sm font-medium text-neutral-700 cursor-pointer">Create Intune app after packaging</label>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="mt-6 flex items-center gap-3">
+                        <button type="submit" id="submitBtn"
+                                class="bg-primary text-white px-5 py-2 rounded-lg font-medium hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/40 transition text-sm">
+                            Start Run
+                        </button>
+                        <a href="/app/dashboard.html"
+                           class="border border-neutral-300 text-neutral-700 bg-white px-4 py-2 rounded-lg font-medium hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition text-sm">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Status Area (hidden by default) -->
+            <div id="statusArea" class="hidden">
+                <!-- Loading state -->
+                <div id="loadingState" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-200 border-t-primary flex-shrink-0"></div>
+                        <p class="text-blue-700 text-sm">Starting packaging run…</p>
+                    </div>
+                </div>
+
+                <!-- Success state -->
+                <div id="successState" class="hidden bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                    <p class="font-medium">Packaging run started successfully!</p>
+                    <p class="mt-1">
+                        <a id="runDetailLink" href="#" class="text-green-800 underline hover:text-green-900 font-medium">View run details →</a>
+                    </p>
+                </div>
+
+                <!-- Error state -->
+                <div id="errorState" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-medium">Failed to start packaging run</p>
+                            <p id="errorMessage" class="mt-1"></p>
+                        </div>
+                        <button id="dismissError" type="button" class="text-red-400 hover:text-red-600 flex-shrink-0" aria-label="Dismiss">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 6l12 12M18 6L6 18"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-neutral-900 text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-6 text-center text-neutral-500 text-sm">
+            <p>&copy; 2026 Nouryon. Packaging Automation.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu dialog
+        document.addEventListener('DOMContentLoaded', function() {
+            var menuBtn = document.getElementById('mobileMenuBtn');
+            var menuDialog = document.getElementById('mobileMenuDialog');
+            var menuClose = document.getElementById('mobileMenuClose');
+            if (menuBtn && menuDialog) {
+                menuBtn.addEventListener('click', function() { menuDialog.showModal(); });
+            }
+            if (menuClose && menuDialog) {
+                menuClose.addEventListener('click', function() { menuDialog.close(); });
+            }
+            // Light-dismiss: close dialog when clicking the backdrop
+            if (menuDialog) {
+                menuDialog.addEventListener('click', function(e) {
+                    if (e.target === menuDialog) menuDialog.close();
+                });
+            }
+        });
+    </script>
+    <script type="module" src="app.js"></script>
+    <script type="module" src="newRun.js"></script>
+</body>
+</html>

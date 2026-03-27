@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Packaging Automation</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#00A3E0', light: '#33B5E7', dark: '#003A70' },
+            accent: '#6D6E71',
+            neutral: {
+              50: '#F9FAFB',
+              100: '#F3F4F6',
+              200: '#E5E7EB',
+              500: '#6B7280',
+              700: '#374151',
+              900: '#111827'
+            }
+          },
+          fontFamily: {
+            heading: ['"DM Sans"', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+    </script>
+    <script>
+        // /app/index.html is a fallback entry point.
+        // The SWA config redirects /app/ → /app/dashboard.html (302).
+        // If the user arrives here directly, redirect to the dashboard.
+        window.location.replace('/app/dashboard.html');
+    </script>
+</head>
+<body class="font-body antialiased bg-neutral-50 text-neutral-700">
+    <p class="p-8 text-neutral-500 text-sm">Redirecting to <a href="/app/dashboard.html" class="text-primary hover:underline">dashboard</a>&hellip;</p>
+</body>
+</html>

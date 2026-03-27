@@ -1,0 +1,51 @@
+{
+  "name": "Agentic Engineering v2",
+
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "options": ["--progress=plain"]
+  },
+
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+
+  "runArgs": ["--cap-add=SYS_ADMIN", "--shm-size=1g"],
+
+  "features": {
+    "ghcr.io/azure/azure-dev/azd:0": { "version": "stable" },
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" },
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "postCreateCommand": "bash tools/init-local-settings.sh && npm install -g azure-functions-core-tools@4 @azure/static-web-apps-cli azurite && dotnet tool install --global dotnet-outdated-tool || true",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+
+  "containerEnv": {
+    "SCREEN_HEIGHT": "1080",
+    "AZURE_FUNCTIONS_CORE_TOOLS_TELEMETRY_OPTOUT": "1",
+    "FUNCTIONS_CORE_TOOLS_DISPLAY_STARTUP_INFO": "0"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-azurefunctions"
+      ]
+    }
+  },
+
+  // Forward ports for app + browser access
+  // 4280: SWA, 7071: Functions, 5900: VNC, 6080: noVNC, 9222: CDP
+  "forwardPorts": [4280, 7071, 5900, 6080, 9222],
+  "portsAttributes": {
+    "4280": { "label": "SWA" },
+    "7071": { "label": "Functions" },
+    "5900": { "label": "VNC" },
+    "6080": { "label": "noVNC"},
+    "9222": { "label": "Chrome DevTools" }
+  }
+}
