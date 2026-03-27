@@ -61,3 +61,4 @@ Please [create an issue](https://github.com/RapidCircle/rc-build-manager-desktop
 ---
 
 Built with ❤️ by [RapidCircle](https://rapidcircle.com)
+
