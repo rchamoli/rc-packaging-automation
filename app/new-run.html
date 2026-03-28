@@ -158,8 +158,18 @@
 
                             <!-- Metadata Form (auto-generates release-metadata.json) -->
                             <div class="mt-4 border-t border-neutral-200 pt-4">
-                                <h3 class="text-sm font-semibold text-neutral-900 mb-3">Application Metadata</h3>
-                                <p class="text-xs text-neutral-500 mb-4">This information will be used to generate the required <code class="bg-neutral-100 px-1 rounded">release-metadata.json</code> file automatically.</p>
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-neutral-900">Application Metadata</h3>
+                                        <p class="text-xs text-neutral-500 mt-1">Fill in manually or upload a <code class="bg-neutral-100 px-1 rounded">release-metadata.json</code> to auto-fill.</p>
+                                    </div>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-primary hover:text-primary-dark transition px-3 py-1.5 rounded-lg border border-primary/30 hover:border-primary/50 bg-primary/5">
+                                        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                        Upload JSON
+                                        <input type="file" id="metadataJsonUpload" accept=".json" class="hidden" />
+                                    </label>
+                                </div>
+                                <p id="metadataJsonStatus" class="text-xs text-green-700 mb-3 hidden"></p>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <!-- Application Name -->

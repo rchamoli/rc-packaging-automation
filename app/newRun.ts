@@ -112,6 +112,82 @@ function initMetadataForm(): void {
             hideElement(registryFields);
         }
     });
+
+    // JSON upload to auto-fill form
+    const jsonUpload = getEl<HTMLInputElement>('metadataJsonUpload');
+    jsonUpload?.addEventListener('change', () => {
+        const file = jsonUpload.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const data = JSON.parse(reader.result as string);
+                populateMetadataForm(data);
+                const status = getEl('metadataJsonStatus');
+                if (status) {
+                    status.textContent = `Loaded "${file.name}" — fields auto-filled.`;
+                    status.classList.remove('hidden');
+                    setTimeout(() => status.classList.add('hidden'), 5000);
+                }
+            } catch {
+                const status = getEl('metadataJsonStatus');
+                if (status) {
+                    status.textContent = 'Invalid JSON file. Please check the format.';
+                    status.className = 'text-xs text-red-700 mb-3';
+                    status.classList.remove('hidden');
+                }
+            }
+            jsonUpload.value = '';
+        };
+        reader.readAsText(file);
+    });
+}
+
+// ── Populate form fields from parsed JSON ────────────────────────────
+function populateMetadataForm(data: Record<string, string>): void {
+    const setVal = (id: string, val: string | undefined) => {
+        const el = getEl<HTMLInputElement>(id);
+        if (el && val !== undefined) el.value = val;
+    };
+    const setSelVal = (id: string, val: string | undefined) => {
+        const el = getEl<HTMLSelectElement>(id);
+        if (el && val !== undefined) el.value = val;
+    };
+
+    setVal('metaAppName', data.applicationName);
+    setVal('metaAnNumber', data.anNumber);
+    setVal('metaVersion', data.releaseVersion);
+    setVal('metaPublisher', data.publisher);
+    setVal('metaUatGroup', data.uatGroup);
+    setVal('metaInstallCmd', data.installCommand);
+    setVal('metaUninstallCmd', data.uninstallCommand);
+    setVal('metaDependencies', data.dependencies);
+    setVal('metaSupersedence', data.supersedence);
+
+    // Installer type + conditional MSI field
+    setSelVal('metaInstallerType', data.installerType?.toUpperCase());
+    const msiSection = getEl('msiProductCodeSection');
+    if (data.installerType?.toUpperCase() === 'MSI') {
+        showElement(msiSection);
+        setVal('metaMsiProductCode', data.msiProductCode);
+    } else {
+        hideElement(msiSection);
+    }
+
+    // Detection type + conditional registry fields
+    setSelVal('metaDetectionType', data.detectionType?.toLowerCase());
+    const registryFields = getEl('registryDetectionFields');
+    if (data.detectionType?.toLowerCase() === 'registry') {
+        showElement(registryFields);
+        setSelVal('metaRegHive', data.registryHive);
+        setVal('metaRegPath', data.registryPath);
+        setSelVal('metaRegArch', data.registryArchitecture);
+        setSelVal('metaRegRuleType', data.registryRuleType);
+        setVal('metaRegValueName', data.registryValueName);
+        setVal('metaRegExpectedValue', data.registryExpectedValue);
+    } else {
+        hideElement(registryFields);
+    }
 }
 
 // ── Build release-metadata.json from form fields ────────────────────
