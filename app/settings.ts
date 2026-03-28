@@ -1,4 +1,4 @@
-export {};
+import { getEl } from './utils.js';
 
 /// <reference path="globals.d.ts" />
 
@@ -10,11 +10,6 @@ interface NotificationPreferences {
     teamsOnFailure: boolean;
     emailAddress: string | null;
     teamsWebhookUrl: string | null;
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────
-function getEl<T extends HTMLElement>(id: string): T | null {
-    return document.getElementById(id) as T | null;
 }
 
 // ── Notification Preferences ────────────────────────────────────────
@@ -49,7 +44,7 @@ async function loadNotificationPreferences(): Promise<void> {
         if (loadingEl) loadingEl.classList.add('hidden');
         if (formEl) formEl.classList.remove('hidden');
 
-        // Disable form for non-admins
+        // Disable form for non-admins (userRoles is guaranteed set by app-shell-ready)
         const roles = window.userRoles ?? [];
         const isAdmin = roles.includes('admin');
         if (!isAdmin) {
@@ -118,6 +113,7 @@ function init(): void {
     if (form) form.addEventListener('submit', saveNotificationPreferences);
 }
 
+// app-shell-ready guarantees window.userRoles is set before init runs
 if (window.appShellReady) {
     init();
 } else {

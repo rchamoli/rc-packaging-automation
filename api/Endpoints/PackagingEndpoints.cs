@@ -216,7 +216,8 @@ public static class PackagingEndpoints
                 metadataFileReference = run.MetadataFileReference,
                 intuneAppId = run.IntuneAppId,
                 intuneAppLink = run.IntuneAppLink,
-                createIntuneApp = run.CreateIntuneApp
+                createIntuneApp = run.CreateIntuneApp,
+                uatGroupId = run.UatGroupId
             });
         }
         catch (Exception ex)

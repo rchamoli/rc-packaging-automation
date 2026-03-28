@@ -45,6 +45,35 @@ builder.Services.Configure<FormOptions>(options =>
 
 var app = builder.Build();
 
+// ── Startup validation ───────────────────────────────────────────
+{
+    var missing = new List<string>();
+    foreach (var key in new[] { "STORAGE", "ROLE_ADMIN_GROUP_ID", "ROLE_PACKAGER_GROUP_ID" })
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+            missing.Add(key);
+    }
+    if (missing.Count > 0)
+    {
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+        logger.LogCritical("Missing required environment variables: {Vars}. The app will not function correctly.", string.Join(", ", missing));
+        throw new InvalidOperationException($"Missing required environment variables: {string.Join(", ", missing)}");
+    }
+
+    // Warn for optional but important vars
+    var warnings = new List<string>();
+    foreach (var key in new[] { "WIN32_PREP_TOOL_PATH", "GRAPH_TENANT_ID", "GRAPH_CLIENT_ID", "GRAPH_CLIENT_SECRET" })
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+            warnings.Add(key);
+    }
+    if (warnings.Count > 0)
+    {
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+        logger.LogWarning("Optional environment variables not set: {Vars}. Some features (packaging, Intune) may not work.", string.Join(", ", warnings));
+    }
+}
+
 // ── Middleware pipeline ──────────────────────────────────────────
 // Auth & security middleware must run BEFORE static files so that
 // /app/* pages are protected even when served from wwwroot.

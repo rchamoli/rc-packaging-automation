@@ -1,4 +1,4 @@
-export {};
+import { getEl, showElement, hideElement, escapeHtml, formatDateTime, statusBadge } from './utils.js';
 
 /// <reference path="globals.d.ts" />
 
@@ -19,51 +19,6 @@ interface PackagingRun {
 
 interface RunsApiResponse {
     runs: PackagingRun[];
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────
-function getEl<T extends HTMLElement>(id: string): T | null {
-    return document.getElementById(id) as T | null;
-}
-
-function showElement(id: string): void {
-    const el = getEl(id);
-    if (el) el.classList.remove('hidden');
-}
-
-function hideElement(id: string): void {
-    const el = getEl(id);
-    if (el) el.classList.add('hidden');
-}
-
-function formatDateTime(iso: string | null): string {
-    if (!iso) return '—';
-    const date = new Date(iso);
-    if (isNaN(date.getTime())) return '—';
-    return date.toLocaleString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-function statusBadge(status: string): string {
-    const base = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium';
-    switch (status) {
-        case 'Succeeded':
-            return `<span class="${base} bg-green-100 text-green-800">Succeeded</span>`;
-        case 'SucceededWithWarnings':
-            return `<span class="${base} bg-yellow-100 text-yellow-800">Warnings</span>`;
-        case 'Failed':
-            return `<span class="${base} bg-red-100 text-red-800">Failed</span>`;
-        case 'Running':
-            return `<span class="${base} bg-amber-100 text-amber-800">Running</span>`;
-        case 'Queued':
-            return `<span class="${base} bg-indigo-100 text-indigo-800">Queued</span>`;
-        default:
-            return `<span class="${base} bg-neutral-100 text-neutral-700">${escapeHtml(status)}</span>`;
-    }
 }
 
 // ── Rendering ───────────────────────────────────────────────────────
@@ -110,12 +65,6 @@ function renderRuns(runs: PackagingRun[]): void {
             </td>
         </tr>${errorRow}`;
     }).join('');
-}
-
-function escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 function showError(message: string): void {
@@ -188,11 +137,9 @@ function init(): void {
         }
     });
 
-    // Load runs on page ready
     loadRuns();
 }
 
-// Wait for app shell ready signal (ensures auth is loaded)
 if (window.appShellReady) {
     init();
 } else {

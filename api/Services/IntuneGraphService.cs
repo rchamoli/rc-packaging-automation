@@ -112,10 +112,11 @@ public class IntuneGraphService
                 }
             }
 
-            // Step 5: Assign to UAT group
+            // Step 5: Assign to UAT group (auto-creates if missing, auto-prefixes "UAT-")
             try
             {
-                await AssignToUatGroupAsync(graphClient, createdAppId, metadata.UatGroup);
+                var uatGroupId = await AssignToUatGroupAsync(graphClient, createdAppId, metadata.UatGroup);
+                run.UatGroupId = uatGroupId;
             }
             catch (Exception ex)
             {
@@ -569,18 +570,27 @@ public class IntuneGraphService
     /// <summary>
     /// Assigns the Intune app to the UAT group.
     /// </summary>
-    private async Task AssignToUatGroupAsync(GraphServiceClient graphClient, string appId, string uatGroup)
+    private async Task<string?> AssignToUatGroupAsync(GraphServiceClient graphClient, string appId, string uatGroup)
     {
         _logger.LogInformation("Assigning app {AppId} to UAT group {UatGroup}", appId, uatGroup);
 
-        var groupId = uatGroup;
-        if (!Guid.TryParse(uatGroup, out _))
+        string? groupId;
+        if (Guid.TryParse(uatGroup, out _))
         {
-            groupId = await ResolveGroupIdAsync(graphClient, uatGroup);
+            groupId = uatGroup;
+        }
+        else
+        {
+            // Auto-prefix "UAT-" if not already present
+            var normalizedName = uatGroup;
+            if (!normalizedName.StartsWith("UAT-", StringComparison.OrdinalIgnoreCase))
+                normalizedName = "UAT-" + normalizedName;
+
+            groupId = await ResolveOrCreateGroupAsync(graphClient, normalizedName);
             if (groupId is null)
             {
-                _logger.LogWarning("Could not resolve UAT group '{UatGroup}'; skipping assignment", uatGroup);
-                return;
+                _logger.LogWarning("Could not resolve or create UAT group '{UatGroup}'; skipping assignment", normalizedName);
+                return null;
             }
         }
 
@@ -595,9 +605,10 @@ public class IntuneGraphService
 
         await graphClient.DeviceAppManagement.MobileApps[appId].Assignments.PostAsync(assignment);
         _logger.LogInformation("Assigned app {AppId} to group {GroupId}", appId, groupId);
+        return groupId;
     }
 
-    private async Task<string?> ResolveGroupIdAsync(GraphServiceClient graphClient, string groupDisplayName)
+    private async Task<string?> ResolveOrCreateGroupAsync(GraphServiceClient graphClient, string groupDisplayName)
     {
         var escapedName = groupDisplayName.Replace("'", "''");
 
@@ -608,14 +619,32 @@ public class IntuneGraphService
             config.QueryParameters.Select = new[] { "id", "displayName" };
         });
 
-        var group = groups?.Value?.FirstOrDefault();
-        if (group?.Id is null)
+        var existing = groups?.Value?.FirstOrDefault();
+        if (existing?.Id is not null)
+            return existing.Id;
+
+        // Group not found — create it as an empty security group
+        _logger.LogInformation("UAT group '{GroupName}' not found in Azure AD; creating it", groupDisplayName);
+
+        var newGroup = new Microsoft.Graph.Models.Group
         {
-            _logger.LogWarning("Group '{GroupName}' not found in Azure AD", groupDisplayName);
+            DisplayName = groupDisplayName,
+            Description = $"UAT testing group for {groupDisplayName} — auto-created by Packaging Automation",
+            MailEnabled = false,
+            MailNickname = groupDisplayName.Replace(" ", "-").ToLowerInvariant(),
+            SecurityEnabled = true,
+            GroupTypes = new List<string>()
+        };
+
+        var created = await graphClient.Groups.PostAsync(newGroup);
+        if (created?.Id is null)
+        {
+            _logger.LogWarning("Failed to create UAT group '{GroupName}'", groupDisplayName);
             return null;
         }
 
-        return group.Id;
+        _logger.LogInformation("Created UAT group '{GroupName}' with ID {GroupId}", groupDisplayName, created.Id);
+        return created.Id;
     }
 
     /// <summary>

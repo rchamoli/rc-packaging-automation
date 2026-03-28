@@ -1,4 +1,4 @@
-export {};
+import { getEl, escapeHtml, formatDateTime, statusBadge } from './utils.js';
 
 /// <reference path="globals.d.ts" />
 
@@ -18,43 +18,6 @@ interface DashboardStats {
         startTime: string;
         endTime: string | null;
     }>;
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────
-function getEl<T extends HTMLElement>(id: string): T | null {
-    return document.getElementById(id) as T | null;
-}
-
-function escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function formatDateTime(iso: string | null): string {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return d.toLocaleString(undefined, {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
-}
-
-function statusBadge(status: string): string {
-    const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
-    switch (status) {
-        case 'Succeeded':
-            return `<span class="${base} bg-green-100 text-green-800">Succeeded</span>`;
-        case 'SucceededWithWarnings':
-            return `<span class="${base} bg-yellow-100 text-yellow-800">Warnings</span>`;
-        case 'Failed':
-            return `<span class="${base} bg-red-100 text-red-800">Failed</span>`;
-        case 'Running':
-            return `<span class="${base} bg-blue-100 text-blue-800">Running</span>`;
-        case 'Queued':
-            return `<span class="${base} bg-indigo-100 text-indigo-800">Queued</span>`;
-        default:
-            return `<span class="${base} bg-neutral-100 text-neutral-800">${escapeHtml(status)}</span>`;
-    }
 }
 
 // ── Dashboard Data ──────────────────────────────────────────────────
@@ -122,11 +85,11 @@ interface ActivityEntry {
 async function loadActivity(): Promise<void> {
     try {
         const response = await fetch('/api/activity');
-        if (!response.ok) return; // Activity feed is optional — fails silently pre-Phase 2
+        if (!response.ok) return;
         const data: { activities: ActivityEntry[] } = await response.json();
         renderActivity(data.activities);
     } catch {
-        // Activity endpoint may not exist yet (Phase 1 only)
+        // Activity endpoint may not exist yet
     }
 }
 
@@ -183,7 +146,6 @@ function applyRoleVisibility(): void {
     const roles = window.userRoles ?? [];
     const isPackager = roles.includes('packager') || roles.includes('admin');
 
-    // Hide "New Run" button for viewer-only users
     document.querySelectorAll('[data-require-role="packager"]').forEach(el => {
         if (!isPackager) (el as HTMLElement).classList.add('hidden');
     });

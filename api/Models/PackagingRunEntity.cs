@@ -39,6 +39,7 @@ public class PackagingRunEntity : ITableEntity
     public string? IntuneAppId { get; set; }
     public string? IntuneAppLink { get; set; }
     public bool CreateIntuneApp { get; set; }
+    public string? UatGroupId { get; set; }
     public string? MetadataSnapshot { get; set; }
     public string? UploadId { get; set; }
     public string? CreatedBy { get; set; }

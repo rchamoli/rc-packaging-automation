@@ -1,4 +1,4 @@
-export {};
+import { getEl, escapeHtml } from './utils.js';
 
 /// <reference path="globals.d.ts" />
 
@@ -38,10 +38,6 @@ let isSubmitting = false;
 let selectedFiles: File[] = [];
 
 // ── DOM helpers ─────────────────────────────────────────────────────
-function getEl<T extends HTMLElement>(id: string): T | null {
-    return document.getElementById(id) as T | null;
-}
-
 function showElement(el: HTMLElement | null): void {
     el?.classList.remove('hidden');
 }
@@ -324,12 +320,6 @@ function formatSize(bytes: number): string {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-function escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 // ── Path format validation ──────────────────────────────────────────

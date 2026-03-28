@@ -1,4 +1,4 @@
-export {};
+import { getEl, showElement, hideElement, escapeHtml, formatDateTime, statusBadge } from './utils.js';
 
 /// <reference path="globals.d.ts" />
 
@@ -25,63 +25,7 @@ interface RunDetail {
 // ── State ───────────────────────────────────────────────────────────
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let currentRunId: string | null = null;
-
-// ── Helpers ─────────────────────────────────────────────────────────
-function getEl<T extends HTMLElement>(id: string): T | null {
-    return document.getElementById(id) as T | null;
-}
-
-function showElement(id: string): void {
-    const el = getEl(id);
-    if (el) el.classList.remove('hidden');
-}
-
-function hideElement(id: string): void {
-    const el = getEl(id);
-    if (el) el.classList.add('hidden');
-}
-
-function escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function formatDateTime(iso: string | null): string {
-    if (!iso) return '—';
-    const date = new Date(iso);
-    if (isNaN(date.getTime())) return '—';
-    return date.toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-}
-
-function statusBadge(status: string): string {
-    const base = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold';
-    switch (status) {
-        case 'Succeeded':
-            return `<span class="${base} bg-green-100 text-green-800">Succeeded</span>`;
-        case 'SucceededWithWarnings':
-            return `<span class="${base} bg-yellow-100 text-yellow-800">Succeeded with Warnings</span>`;
-        case 'Failed':
-            return `<span class="${base} bg-red-100 text-red-800">Failed</span>`;
-        case 'Running':
-            return `<span class="${base} bg-amber-100 text-amber-800">Running</span>`;
-        case 'Queued':
-            return `<span class="${base} bg-indigo-100 text-indigo-800">Queued</span>`;
-        default:
-            return `<span class="${base} bg-neutral-100 text-neutral-700">${escapeHtml(status)}</span>`;
-    }
-}
-
-function isTerminalStatus(status: string): boolean {
-    return status === 'Succeeded' || status === 'SucceededWithWarnings' || status === 'Failed';
-}
+const LOG_TRUNCATE_LINES = 500;
 
 // ── Rendering ───────────────────────────────────────────────────────
 function renderRunDetail(run: RunDetail): void {
@@ -100,9 +44,8 @@ function renderRunDetail(run: RunDetail): void {
     if (headerSubtitle) headerSubtitle.textContent = `Run ${run.id}`;
 
     const headerStatus = getEl('headerStatus');
-    if (headerStatus) headerStatus.innerHTML = statusBadge(run.status);
+    if (headerStatus) headerStatus.innerHTML = statusBadge(run.status, 'md');
 
-    // Update page title
     document.title = `${run.appName} v${run.version} — Run Detail | Packaging Automation`;
 
     // Metadata fields
@@ -113,16 +56,16 @@ function renderRunDetail(run: RunDetail): void {
     if (detailVersion) detailVersion.textContent = run.version;
 
     const detailStatus = getEl('detailStatus');
-    if (detailStatus) detailStatus.innerHTML = statusBadge(run.status);
+    if (detailStatus) detailStatus.innerHTML = statusBadge(run.status, 'md');
 
     const detailSourceType = getEl('detailSourceType');
     if (detailSourceType) detailSourceType.textContent = run.sourceType || '—';
 
     const detailStartTime = getEl('detailStartTime');
-    if (detailStartTime) detailStartTime.textContent = formatDateTime(run.startTime);
+    if (detailStartTime) detailStartTime.textContent = formatDateTime(run.startTime, true);
 
     const detailEndTime = getEl('detailEndTime');
-    if (detailEndTime) detailEndTime.textContent = formatDateTime(run.endTime);
+    if (detailEndTime) detailEndTime.textContent = formatDateTime(run.endTime, true);
 
     const detailSourceLocation = getEl('detailSourceLocation');
     if (detailSourceLocation) detailSourceLocation.textContent = run.sourceLocation || '—';
@@ -149,7 +92,7 @@ function renderRunDetail(run: RunDetail): void {
         }
     }
 
-    // Error summary (optional — shown for failed runs)
+    // Error summary (optional)
     if (run.errorSummary) {
         showElement('detailErrorRow');
         const detailErrorSummary = getEl('detailErrorSummary');
@@ -162,8 +105,6 @@ function renderRunDetail(run: RunDetail): void {
         hideElement('noLogSection');
         const logLink = getEl<HTMLAnchorElement>('logLink');
         if (logLink) logLink.href = run.logUrl;
-
-        // Fetch and display inline log content
         fetchLogContent(run.logUrl);
     } else {
         hideElement('logLinkSection');
@@ -181,7 +122,7 @@ function renderRunDetail(run: RunDetail): void {
         showElement('noArtifactSection');
     }
 
-    // Create Intune App button (for succeeded runs without an Intune app)
+    // Create Intune App button
     if ((run.status === 'Succeeded' || run.status === 'SucceededWithWarnings') && !run.intuneAppId && run.artifactUrl) {
         showElement('createIntuneAppSection');
     } else {
@@ -196,17 +137,32 @@ function renderRunDetail(run: RunDetail): void {
     }
 }
 
-// ── Inline Log Content ─────────────────────────────────────────────
+// ── Inline Log Content (with truncation) ────────────────────────────
 async function fetchLogContent(logUrl: string): Promise<void> {
     try {
         const response = await fetch(logUrl);
         if (!response.ok) return;
         const text = await response.text();
         const logContent = getEl<HTMLPreElement>('logContent');
-        if (logContent) {
+        if (!logContent) return;
+
+        const lines = text.split('\n');
+        if (lines.length > LOG_TRUNCATE_LINES) {
+            logContent.textContent = lines.slice(0, LOG_TRUNCATE_LINES).join('\n');
+            // Show "Show all" button
+            const showAllBtn = getEl('logShowAllBtn');
+            if (showAllBtn) {
+                showAllBtn.textContent = `Show all ${lines.length} lines`;
+                showAllBtn.classList.remove('hidden');
+                showAllBtn.onclick = () => {
+                    logContent.textContent = text;
+                    showAllBtn.classList.add('hidden');
+                };
+            }
+        } else {
             logContent.textContent = text;
-            showElement('logContentSection');
         }
+        showElement('logContentSection');
     } catch {
         // Silently fail — the download link is still available
     }
@@ -233,7 +189,6 @@ async function createIntuneApp(runId: string): Promise<void> {
             throw new Error(data?.error || `HTTP ${response.status}`);
         }
 
-        // Reload run detail to show updated Intune info
         await loadRunDetail(runId);
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to create Intune app';
@@ -317,21 +272,17 @@ function init(): void {
 
     currentRunId = runId;
 
-    // Wire retry button
     const retryBtn = getEl<HTMLButtonElement>('retryBtn');
     retryBtn?.addEventListener('click', () => loadRunDetail(runId));
 
-    // Wire Create Intune App button
     const createIntuneAppBtn = getEl<HTMLButtonElement>('createIntuneAppBtn');
     createIntuneAppBtn?.addEventListener('click', () => createIntuneApp(runId));
 
     loadRunDetail(runId);
 }
 
-// Cleanup on page unload
 window.addEventListener('beforeunload', () => stopPolling());
 
-// Wait for app shell ready signal (ensures auth is loaded)
 if (window.appShellReady) {
     init();
 } else {
