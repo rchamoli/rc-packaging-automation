@@ -3,6 +3,7 @@ using Company.Function.BackgroundServices;
 using Company.Function.Endpoints;
 using Company.Function.Middleware;
 using Company.Function.Services;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,10 +33,14 @@ if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPLICATIONINSIGHT
     builder.Services.AddApplicationInsightsTelemetry();
 }
 
-// ── Kestrel limits (500 MB uploads) ──────────────────────────────
+// ── Upload limits (500 MB) ────────────────────────────────────────
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Limits.MaxRequestBodySize = 500 * 1024 * 1024;
+});
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 500 * 1024 * 1024;
 });
 
 var app = builder.Build();
