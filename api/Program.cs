@@ -41,6 +41,12 @@ builder.WebHost.ConfigureKestrel(options =>
 var app = builder.Build();
 
 // ── Middleware pipeline ──────────────────────────────────────────
+// Auth & security middleware must run BEFORE static files so that
+// /app/* pages are protected even when served from wwwroot.
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<RoleEnrichmentMiddleware>();
+app.UseMiddleware<AuthEnforcementMiddleware>();
+
 app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -50,10 +56,6 @@ app.UseStaticFiles(new StaticFileOptions
             ctx.Context.Response.Headers.CacheControl = "no-store";
     }
 });
-
-app.UseMiddleware<SecurityHeadersMiddleware>();
-app.UseMiddleware<RoleEnrichmentMiddleware>();
-app.UseMiddleware<AuthEnforcementMiddleware>();
 
 // ── Endpoint routing ─────────────────────────────────────────────
 app.MapGet("/app/", () => Results.Redirect("/app/dashboard.html"));
