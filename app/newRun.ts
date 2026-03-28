@@ -29,7 +29,8 @@ interface ApiErrorResponse {
 const MAX_TOTAL_SIZE = 500 * 1024 * 1024; // 500 MB
 const MAX_FILE_SIZE = 250 * 1024 * 1024; // 250 MB per file
 const ALLOWED_EXTENSIONS = ['.exe', '.msi', '.zip', '.json'];
-const SUBMIT_TIMEOUT_MS = 60_000;
+const UPLOAD_TIMEOUT_MS = 600_000; // 10 min for large file uploads
+const API_TIMEOUT_MS = 30_000;    // 30s for API calls
 
 // ── State ───────────────────────────────────────────────────────────
 let createIntuneApp = true;
@@ -417,9 +418,6 @@ async function submitForm(): Promise<void> {
         submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), SUBMIT_TIMEOUT_MS);
-
     try {
         let uploadId: string | undefined;
 
@@ -430,8 +428,11 @@ async function submitForm(): Promise<void> {
             uploadId = uploadResult.uploadId;
         }
 
-        // Step 2: Start packaging run
+        // Step 2: Start packaging run (separate timeout from upload)
         showStatus('loading', 'Starting packaging run…');
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
         const releaseFolderPath = sourceType === 'local-upload'
             ? ''
@@ -452,6 +453,7 @@ async function submitForm(): Promise<void> {
             body: JSON.stringify(payload),
             signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             let errorMsg = 'An unexpected error occurred. Please try again.';
@@ -491,7 +493,6 @@ async function submitForm(): Promise<void> {
         }
         showStatus('error');
     } finally {
-        clearTimeout(timeoutId);
         isSubmitting = false;
         if (submitBtn) {
             submitBtn.disabled = false;
