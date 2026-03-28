@@ -62,7 +62,7 @@ var app = builder.Build();
 
     // Warn for optional but important vars
     var warnings = new List<string>();
-    foreach (var key in new[] { "WIN32_PREP_TOOL_PATH", "GRAPH_TENANT_ID", "GRAPH_CLIENT_ID", "GRAPH_CLIENT_SECRET" })
+    foreach (var key in new[] { "GRAPH_TENANT_ID", "GRAPH_CLIENT_ID", "GRAPH_CLIENT_SECRET" })
     {
         if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
             warnings.Add(key);

@@ -1,9 +1,9 @@
-using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Company.Function.Models;
 using Company.Function.Utilities;
 using Microsoft.Extensions.Logging;
+using SvRooij.ContentPrep;
 
 namespace Company.Function.Services;
 
@@ -15,17 +15,20 @@ public class PackagingService
     private readonly StorageService _storageService;
     private readonly IntuneGraphService _intuneService;
     private readonly ILogger<PackagingService> _logger;
+    private readonly ILoggerFactory _loggerFactory;
 
     public PackagingService(
         MetadataReader metadataReader,
         StorageService storageService,
         IntuneGraphService intuneService,
-        ILogger<PackagingService> logger)
+        ILogger<PackagingService> logger,
+        ILoggerFactory loggerFactory)
     {
         _metadataReader = metadataReader;
         _storageService = storageService;
         _intuneService = intuneService;
         _logger = logger;
+        _loggerFactory = loggerFactory;
     }
 
     public async Task<(PackagingRunEntity? Run, string? Error)> StartRunAsync(
@@ -157,93 +160,92 @@ public class PackagingService
             log.AppendLine($"[{Utc.Now:O}] Metadata validated successfully");
             log.AppendLine($"[{Utc.Now:O}] Run record created in Table Storage");
 
-            // Run the Win32 Content Prep Tool
-            var toolPath = Environment.GetEnvironmentVariable("WIN32_PREP_TOOL_PATH");
-            if (string.IsNullOrWhiteSpace(toolPath))
+            // Create .intunewin package using SvRooij.ContentPrep (native .NET, no Wine needed)
+            var setupFileName = IntuneGraphService.DeriveSetupFileName(metadata);
+            var outputDir = Path.Combine(releaseFolderPath, "output");
+            Directory.CreateDirectory(outputDir);
+
+            // Clean stale .intunewin files from previous runs
+            foreach (var staleFile in Directory.GetFiles(outputDir, "*.intunewin"))
+            {
+                try { File.Delete(staleFile); }
+                catch (IOException ex) { _logger.LogDebug(ex, "Could not delete stale file {File}", staleFile); }
+            }
+
+            log.AppendLine($"[{Utc.Now:O}] Creating .intunewin package (SvRooij.ContentPrep)");
+            log.AppendLine($"  Source folder: {releaseFolderPath}");
+            log.AppendLine($"  Setup file: {setupFileName}");
+            log.AppendLine($"  Output folder: {outputDir}");
+
+            var timeoutSeconds = GetTimeoutSeconds();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+
+            try
+            {
+                var packager = new Packager(_loggerFactory.CreateLogger<Packager>());
+                await packager.CreatePackage(
+                    releaseFolderPath,
+                    setupFileName,
+                    outputDir,
+                    null, // catalogFile
+                    cts.Token);
+
+                log.AppendLine($"[{Utc.Now:O}] Content prep completed successfully");
+            }
+            catch (OperationCanceledException)
             {
                 run.Status = RunStatus.Failed;
-                run.ErrorSummary = "WIN32_PREP_TOOL_PATH is not configured.";
+                run.ErrorSummary = $"Content prep timed out after {timeoutSeconds} seconds.";
                 run.EndTime = Utc.Now;
                 log.AppendLine($"[{run.EndTime:O}] ERROR: {run.ErrorSummary}");
                 log.AppendLine($"[{run.EndTime:O}] Run completed with status: {run.Status}");
             }
-            else
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                var timeoutSeconds = GetTimeoutSeconds();
-                log.AppendLine($"[{Utc.Now:O}] Starting Win32 Content Prep Tool: {toolPath}");
-                log.AppendLine($"  Timeout: {timeoutSeconds}s");
+                run.Status = RunStatus.Failed;
+                run.ErrorSummary = $"Content prep failed: {ex.Message}";
+                run.EndTime = Utc.Now;
+                log.AppendLine($"[{run.EndTime:O}] ERROR: {run.ErrorSummary}");
+                log.AppendLine($"[{run.EndTime:O}] Run completed with status: {run.Status}");
+            }
 
-                var (exitCode, stdout, stderr, timedOut) = await RunToolAsync(
-                    toolPath, releaseFolderPath, timeoutSeconds);
+            // If content prep succeeded, look for the artifact
+            if (run.Status == RunStatus.Running)
+            {
+                var artifactPath = FindIntunewinFile(outputDir) ?? FindIntunewinFile(releaseFolderPath);
 
-                if (!string.IsNullOrWhiteSpace(stdout))
+                if (artifactPath != null)
                 {
-                    log.AppendLine($"[{Utc.Now:O}] --- Tool stdout ---");
-                    log.AppendLine(stdout);
-                }
-                if (!string.IsNullOrWhiteSpace(stderr))
-                {
-                    log.AppendLine($"[{Utc.Now:O}] --- Tool stderr ---");
-                    log.AppendLine(stderr);
-                }
-
-                if (timedOut)
-                {
-                    run.Status = RunStatus.Failed;
-                    run.ErrorSummary = $"Win32 Content Prep Tool timed out after {timeoutSeconds} seconds.";
-                    run.EndTime = Utc.Now;
-                    log.AppendLine($"[{run.EndTime:O}] ERROR: {run.ErrorSummary}");
-                    log.AppendLine($"[{run.EndTime:O}] Run completed with status: {run.Status}");
-                }
-                else if (exitCode != 0)
-                {
-                    run.Status = RunStatus.Failed;
-                    run.ErrorSummary = $"Win32 Content Prep Tool exited with code {exitCode}.";
-                    run.EndTime = Utc.Now;
-                    log.AppendLine($"[{run.EndTime:O}] ERROR: {run.ErrorSummary}");
-                    log.AppendLine($"[{run.EndTime:O}] Run completed with status: {run.Status}");
+                    log.AppendLine($"[{Utc.Now:O}] Found artifact: {artifactPath}");
+                    try
+                    {
+                        var blobPath = await _storageService.UploadArtifactAsync(
+                            metadata.ApplicationName, runId, artifactPath);
+                        run.OutputArtifactPath = blobPath;
+                        log.AppendLine($"[{Utc.Now:O}] Artifact uploaded to blob: {blobPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to upload artifact for run {RunId}", runId);
+                        log.AppendLine($"[{Utc.Now:O}] WARNING: Failed to upload artifact: {ex.Message}");
+                        run.Status = RunStatus.SucceededWithWarnings;
+                        run.ErrorSummary = "Packaging succeeded but artifact upload failed.";
+                    }
                 }
                 else
                 {
-                    log.AppendLine($"[{Utc.Now:O}] Win32 Content Prep Tool completed successfully (exit code 0)");
-
-                    // Look for the .intunewin artifact in the output directory
-                    var outputDir = Path.Combine(releaseFolderPath, "output");
-                    var artifactPath = FindIntunewinFile(outputDir) ?? FindIntunewinFile(releaseFolderPath);
-
-                    if (artifactPath != null)
-                    {
-                        log.AppendLine($"[{Utc.Now:O}] Found artifact: {artifactPath}");
-                        try
-                        {
-                            var blobPath = await _storageService.UploadArtifactAsync(
-                                metadata.ApplicationName, runId, artifactPath);
-                            run.OutputArtifactPath = blobPath;
-                            log.AppendLine($"[{Utc.Now:O}] Artifact uploaded to blob: {blobPath}");
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Failed to upload artifact for run {RunId}", runId);
-                            log.AppendLine($"[{Utc.Now:O}] WARNING: Failed to upload artifact: {ex.Message}");
-                            run.Status = RunStatus.SucceededWithWarnings;
-                            run.ErrorSummary = "Packaging succeeded but artifact upload failed.";
-                        }
-                    }
-                    else
-                    {
-                        log.AppendLine($"[{Utc.Now:O}] WARNING: No .intunewin artifact found in output");
-                        run.Status = RunStatus.SucceededWithWarnings;
-                        run.ErrorSummary = "Packaging tool succeeded but no .intunewin artifact was found.";
-                    }
-
-                    // Only set Succeeded if status is still Running (no warnings were set)
-                    if (run.Status == RunStatus.Running)
-                    {
-                        run.Status = RunStatus.Succeeded;
-                    }
-                    run.EndTime = Utc.Now;
-                    log.AppendLine($"[{run.EndTime:O}] Run completed with status: {run.Status}");
+                    log.AppendLine($"[{Utc.Now:O}] WARNING: No .intunewin artifact found in output");
+                    run.Status = RunStatus.SucceededWithWarnings;
+                    run.ErrorSummary = "Packaging tool succeeded but no .intunewin artifact was found.";
                 }
+
+                // Only set Succeeded if status is still Running (no warnings were set)
+                if (run.Status == RunStatus.Running)
+                {
+                    run.Status = RunStatus.Succeeded;
+                }
+                run.EndTime = Utc.Now;
+                log.AppendLine($"[{run.EndTime:O}] Run completed with status: {run.Status}");
             }
         }
         catch (Exception ex)
@@ -309,59 +311,6 @@ public class PackagingService
         if (!string.IsNullOrWhiteSpace(envValue) && int.TryParse(envValue, out var seconds) && seconds > 0)
             return seconds;
         return DefaultTimeoutSeconds;
-    }
-
-    private async Task<(int ExitCode, string Stdout, string Stderr, bool TimedOut)> RunToolAsync(
-        string toolPath, string releaseFolderPath, int timeoutSeconds)
-    {
-        var outputDir = Path.Combine(releaseFolderPath, "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Clean stale .intunewin files from previous runs
-        foreach (var staleFile in Directory.GetFiles(outputDir, "*.intunewin"))
-        {
-            try { File.Delete(staleFile); }
-            catch (IOException ex) { _logger.LogDebug(ex, "Could not delete stale file {File}", staleFile); }
-        }
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = toolPath,
-            Arguments = $"-c \"{releaseFolderPath}\" -s \"{releaseFolderPath}\" -o \"{outputDir}\" -q",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        using var process = new Process { StartInfo = psi };
-        var stdoutBuilder = new StringBuilder();
-        var stderrBuilder = new StringBuilder();
-        var stdoutLock = new object();
-        var stderrLock = new object();
-
-        process.OutputDataReceived += (_, e) => { if (e.Data != null) lock (stdoutLock) { stdoutBuilder.AppendLine(e.Data); } };
-        process.ErrorDataReceived += (_, e) => { if (e.Data != null) lock (stderrLock) { stderrBuilder.AppendLine(e.Data); } };
-
-        _logger.LogInformation("Starting process: {ToolPath} with timeout {Timeout}s", toolPath, timeoutSeconds);
-
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
-        try
-        {
-            await process.WaitForExitAsync(cts.Token);
-            return (process.ExitCode, stdoutBuilder.ToString(), stderrBuilder.ToString(), false);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("Process timed out after {Timeout}s, killing", timeoutSeconds);
-            try { process.Kill(entireProcessTree: true); }
-                catch (Exception ex) { _logger.LogDebug(ex, "Failed to kill timed-out process"); }
-            return (-1, stdoutBuilder.ToString(), stderrBuilder.ToString(), true);
-        }
     }
 
     private static string? FindIntunewinFile(string directory)
