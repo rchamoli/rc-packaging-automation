@@ -10,9 +10,20 @@ namespace Company.Function.Middleware;
 /// </summary>
 public class RoleEnrichmentMiddleware
 {
-    private readonly RequestDelegate _next;
+    private static readonly HashSet<string> GroupClaimTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "groups",
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/groups"
+    };
 
-    public RoleEnrichmentMiddleware(RequestDelegate next) => _next = next;
+    private readonly RequestDelegate _next;
+    private readonly ILogger<RoleEnrichmentMiddleware> _logger;
+
+    public RoleEnrichmentMiddleware(RequestDelegate next, ILogger<RoleEnrichmentMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -26,9 +37,13 @@ public class RoleEnrichmentMiddleware
                 var packagerGroupId = Environment.GetEnvironmentVariable("ROLE_PACKAGER_GROUP_ID");
 
                 var groupClaims = principal.Claims?
-                    .Where(c => c.Typ == "groups")
+                    .Where(c => GroupClaimTypes.Contains(c.Typ))
                     .Select(c => c.Val)
                     .ToList() ?? new List<string>();
+
+                _logger.LogDebug("RoleEnrichment: user={User}, claimCount={ClaimCount}, groupClaims=[{Groups}], adminGrp={Admin}, packagerGrp={Packager}",
+                    principal.UserId, principal.Claims?.Count ?? 0,
+                    string.Join(",", groupClaims), adminGroupId, packagerGroupId);
 
                 var roles = new List<string>();
                 if (!string.IsNullOrEmpty(adminGroupId) && groupClaims.Contains(adminGroupId))
@@ -36,6 +51,8 @@ public class RoleEnrichmentMiddleware
                 if (!string.IsNullOrEmpty(packagerGroupId) && groupClaims.Contains(packagerGroupId))
                     roles.Add("packager");
                 roles.Add("viewer");
+
+                _logger.LogDebug("RoleEnrichment: assigned roles=[{Roles}]", string.Join(",", roles));
 
                 principal.UserRoles = roles;
 
