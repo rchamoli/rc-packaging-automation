@@ -1,15 +1,12 @@
 using System.Text.Json;
+using Company.Function.BackgroundServices;
+using Company.Function.Endpoints;
+using Company.Function.Middleware;
 using Company.Function.Services;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
-var builder = FunctionsApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-builder.ConfigureFunctionsWebApplication();
-
-// Register application services
+// ── Services (unchanged from Azure Functions version) ────────────
 builder.Services.AddSingleton<MetadataReader>();
 builder.Services.AddSingleton<StorageService>();
 builder.Services.AddSingleton<AppDataSeeder>();
@@ -18,21 +15,60 @@ builder.Services.AddSingleton<PackagingService>();
 builder.Services.AddSingleton<ActivityService>();
 builder.Services.AddSingleton<NotificationService>();
 
-// Configure JSON serialization to use camelCase for Azure Functions Worker
-// JsonSerializerDefaults.Web enables camelCase naming and case-insensitive deserialization
-builder.Services.Configure<WorkerOptions>(options =>
+// ── Background processing (replaces Task.Run fire-and-forget) ────
+builder.Services.AddSingleton<PackagingJobQueue>();
+builder.Services.AddHostedService<PackagingBackgroundService>();
+
+// ── JSON serialization (camelCase, case-insensitive) ─────────────
+builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    options.Serializer = new Azure.Core.Serialization.JsonObjectSerializer(
-        new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
 });
 
-// Only enable Application Insights when a connection string is configured;
-// avoids noisy blocked DNS lookups to *.in.applicationinsights.azure.com in local dev.
+// ── Application Insights ─────────────────────────────────────────
 if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING")))
 {
-    builder.Services
-        .AddApplicationInsightsTelemetryWorkerService()
-        .ConfigureFunctionsApplicationInsights();
+    builder.Services.AddApplicationInsightsTelemetry();
 }
 
-builder.Build().Run();
+// ── Kestrel limits (500 MB uploads) ──────────────────────────────
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 500 * 1024 * 1024;
+});
+
+var app = builder.Build();
+
+// ── Middleware pipeline ──────────────────────────────────────────
+app.UseDefaultFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        if (ctx.Context.Request.Path.StartsWithSegments("/app"))
+            ctx.Context.Response.Headers.CacheControl = "no-store";
+    }
+});
+
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<RoleEnrichmentMiddleware>();
+app.UseMiddleware<AuthEnforcementMiddleware>();
+
+// ── Endpoint routing ─────────────────────────────────────────────
+app.MapGet("/app/", () => Results.Redirect("/app/dashboard.html"));
+
+app.MapHealthEndpoints();
+app.MapPackagingEndpoints();
+app.MapIntuneAppEndpoints();
+app.MapActivityEndpoints();
+app.MapNotificationEndpoints();
+app.MapUploadEndpoints();
+app.MapRoleEndpoints();
+app.MapDemoEndpoints();
+app.MapSeedEndpoints();
+
+// ── SPA fallback (public landing page) ───────────────────────────
+app.MapFallbackToFile("index.html");
+
+app.Run();

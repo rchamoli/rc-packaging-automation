@@ -1,0 +1,64 @@
+name: Build and Deploy to Azure App Service
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AZURE_WEBAPP_NAME: packaging-automation-webapp
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npx tsc -p tsconfig.frontend.json
+
+      - name: Prepare wwwroot (static files)
+        run: |
+          mkdir -p api/wwwroot/app api/wwwroot/vendor api/wwwroot/docs/assets
+
+          # Root files
+          cp index.html api/wwwroot/
+          [ -f rapid_circle_logo.png ] && cp rapid_circle_logo.png api/wwwroot/ || true
+
+          # App pages (HTML + compiled JS)
+          cp app/*.html api/wwwroot/app/
+          cp app/*.js api/wwwroot/app/
+
+          # Vendor assets
+          cp -r vendor/* api/wwwroot/vendor/
+
+          # Docs assets (if present)
+          [ -d docs/assets ] && cp -r docs/assets/* api/wwwroot/docs/assets/ || true
+
+      - name: Publish .NET app
+        run: dotnet publish api/api.csproj -c Release -o publish
+
+      - name: Deploy to Azure App Service
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: publish/

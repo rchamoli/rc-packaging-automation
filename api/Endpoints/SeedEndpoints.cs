@@ -1,31 +1,81 @@
-using System.Net;
 using System.Text;
+using Azure.Data.Tables;
 using Azure.Storage.Blobs;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
 using Company.Function.Models;
 using Company.Function.Services;
 using Company.Function.Utilities;
 
-namespace Company.Function;
+namespace Company.Function.Endpoints;
 
-public class SeedPackagingRuns
+public static class SeedEndpoints
 {
-    private readonly StorageService _storageService;
-    private readonly ILogger<SeedPackagingRuns> _logger;
-
-    public SeedPackagingRuns(StorageService storageService, ILogger<SeedPackagingRuns> logger)
+    public static void MapSeedEndpoints(this WebApplication app)
     {
-        _storageService = storageService;
-        _logger = logger;
+        app.MapPost("/api/manage/seed-sample", SeedSample);
+        app.MapPost("/api/manage/seed-packaging-runs", SeedPackagingRuns);
     }
 
-    [Function("SeedPackagingRuns")]
-    public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "manage/seed-packaging-runs")] HttpRequestData req)
+    private static async Task<IResult> SeedSample(ILoggerFactory loggerFactory)
     {
-        _logger.LogInformation("Seeding packaging run data...");
+        var logger = loggerFactory.CreateLogger("SeedEndpoints");
+        logger.LogInformation("Seeding sample data...");
+
+        var connectionString = Environment.GetEnvironmentVariable("STORAGE");
+        if (string.IsNullOrEmpty(connectionString))
+            return Results.Json(new { error = "STORAGE connection string not configured" }, statusCode: 500);
+
+        var tableClient = new TableServiceClient(connectionString).GetTableClient("SampleData");
+        await tableClient.CreateIfNotExistsAsync();
+
+        var items = new List<TableEntity>
+        {
+            new("samples", "welcome-note")
+            {
+                { "Title", "Welcome to the Template" },
+                { "Description", "This is a sample entity — replace with your own data." },
+                { "CreatedBy", "user-admin" },
+                { "CreatedAt", DateTime.UtcNow }
+            },
+            new("samples", "getting-started")
+            {
+                { "Title", "Getting Started" },
+                { "Description", "Replace this seed data with your own feature data." },
+                { "CreatedBy", "user-admin" },
+                { "CreatedAt", DateTime.UtcNow }
+            },
+            new("samples", "manager-task")
+            {
+                { "Title", "Manager Task Example" },
+                { "Description", "An example entity owned by the manager persona." },
+                { "CreatedBy", "user-manager" },
+                { "CreatedAt", DateTime.UtcNow }
+            },
+            new("samples", "team-member-task")
+            {
+                { "Title", "Team Member Task Example" },
+                { "Description", "An example entity owned by the standard user persona." },
+                { "CreatedBy", "user-standard" },
+                { "CreatedAt", DateTime.UtcNow }
+            }
+        };
+
+        var seeded = 0;
+        foreach (var item in items)
+        {
+            await tableClient.UpsertEntityAsync(item, TableUpdateMode.Replace);
+            seeded++;
+        }
+
+        logger.LogInformation("Seeded {Count} sample entities", seeded);
+        return Results.Ok(new { seeded, table = "SampleData" });
+    }
+
+    private static async Task<IResult> SeedPackagingRuns(
+        StorageService storageService,
+        ILoggerFactory loggerFactory)
+    {
+        var logger = loggerFactory.CreateLogger("SeedEndpoints");
+        logger.LogInformation("Seeding packaging run data...");
 
         var runs = new List<PackagingRunEntity>
         {
@@ -94,7 +144,6 @@ public class SeedPackagingRuns
         var seeded = 0;
         foreach (var run in runs)
         {
-            // Upload a sample log for completed runs
             if (run.Status != RunStatus.Running)
             {
                 var log = new StringBuilder();
@@ -107,9 +156,7 @@ public class SeedPackagingRuns
                 log.AppendLine($"[{run.StartTime.AddSeconds(5):O}] Metadata validated successfully");
                 log.AppendLine($"[{run.StartTime.AddSeconds(10):O}] Run record created in Table Storage");
                 if (run.Status == RunStatus.Failed)
-                {
                     log.AppendLine($"[{run.EndTime:O}] ERROR: {run.ErrorSummary ?? "Unknown error"}");
-                }
                 if (run.Status == RunStatus.Succeeded && run.OutputArtifactPath != null)
                 {
                     log.AppendLine($"[{run.StartTime.AddSeconds(30):O}] Win32 Content Prep Tool completed successfully (exit code 0)");
@@ -119,16 +166,15 @@ public class SeedPackagingRuns
 
                 try
                 {
-                    var logUrl = await _storageService.UploadLogAsync(run.AppName, run.RunId, log.ToString());
+                    var logUrl = await storageService.UploadLogAsync(run.AppName, run.RunId, log.ToString());
                     run.LogUrl = logUrl;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to upload sample log for run {RunId}", run.RunId);
+                    logger.LogWarning(ex, "Failed to upload sample log for run {RunId}", run.RunId);
                 }
             }
 
-            // Upload a sample artifact blob for succeeded runs with artifact path
             if (run.Status == RunStatus.Succeeded && run.OutputArtifactPath != null)
             {
                 try
@@ -145,18 +191,15 @@ public class SeedPackagingRuns
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to upload sample artifact for run {RunId}", run.RunId);
+                    logger.LogWarning(ex, "Failed to upload sample artifact for run {RunId}", run.RunId);
                 }
             }
 
-            await _storageService.UpsertRunAsync(run);
+            await storageService.UpsertRunAsync(run);
             seeded++;
         }
 
-        _logger.LogInformation("Seeded {Count} packaging runs", seeded);
-
-        var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(new { seeded, table = TableNames.PackagingRuns });
-        return response;
+        logger.LogInformation("Seeded {Count} packaging runs", seeded);
+        return Results.Ok(new { seeded, table = TableNames.PackagingRuns });
     }
 }

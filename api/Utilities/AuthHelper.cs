@@ -1,14 +1,13 @@
 using System.Text;
 using System.Text.Json;
-using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Company.Function.Utilities;
 
 public static class AuthHelper
 {
-    public static ClientPrincipal? GetClientPrincipal(HttpRequestData req)
+    public static ClientPrincipal? GetClientPrincipal(HttpRequest req)
     {
-        if (!req.Headers.TryGetValues("x-ms-client-principal", out var values))
+        if (!req.Headers.TryGetValue("x-ms-client-principal", out var values))
             return null;
 
         var header = values.FirstOrDefault();
