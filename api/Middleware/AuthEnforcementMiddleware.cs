@@ -3,8 +3,8 @@ using Company.Function.Utilities;
 namespace Company.Function.Middleware;
 
 /// <summary>
-/// Replaces SWA route-level auth. Redirects unauthenticated users to Azure AD login
-/// for protected routes (/app/* and most /api/* routes).
+/// Requires authentication for all routes except a small anonymous allow-list.
+/// Unauthenticated visitors are redirected to Azure AD login.
 /// </summary>
 public class AuthEnforcementMiddleware
 {
@@ -16,12 +16,7 @@ public class AuthEnforcementMiddleware
     {
         var path = context.Request.Path.Value ?? "";
 
-        bool requiresAuth =
-            path.StartsWith("/app/", StringComparison.OrdinalIgnoreCase) ||
-            path.Equals("/app", StringComparison.OrdinalIgnoreCase) ||
-            (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) && !IsAnonymousApiRoute(path));
-
-        if (requiresAuth)
+        if (!IsAnonymousRoute(path))
         {
             var principal = AuthHelper.GetClientPrincipal(context.Request);
             if (principal == null || string.IsNullOrEmpty(principal.UserId))
@@ -34,9 +29,10 @@ public class AuthEnforcementMiddleware
         await _next(context);
     }
 
-    private static bool IsAnonymousApiRoute(string path) =>
+    private static bool IsAnonymousRoute(string path) =>
         path.Equals("/api/health", StringComparison.OrdinalIgnoreCase) ||
         path.Equals("/api/roles", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/api/manage/", StringComparison.OrdinalIgnoreCase) ||
-        path.StartsWith("/api/demo/", StringComparison.OrdinalIgnoreCase);
+        path.StartsWith("/api/demo/", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/.auth/", StringComparison.OrdinalIgnoreCase);
 }

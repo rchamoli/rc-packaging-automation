@@ -58,6 +58,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 // ── Endpoint routing ─────────────────────────────────────────────
+app.MapGet("/", () => Results.Redirect("/app/dashboard.html"));
 app.MapGet("/app/", () => Results.Redirect("/app/dashboard.html"));
 
 app.MapHealthEndpoints();
@@ -69,8 +70,5 @@ app.MapUploadEndpoints();
 app.MapRoleEndpoints();
 app.MapDemoEndpoints();
 app.MapSeedEndpoints();
-
-// ── SPA fallback (public landing page) ───────────────────────────
-app.MapFallbackToFile("index.html");
 
 app.Run();
