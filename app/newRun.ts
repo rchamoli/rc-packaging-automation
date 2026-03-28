@@ -28,7 +28,7 @@ interface ApiErrorResponse {
 // ── Constants ───────────────────────────────────────────────────────
 const MAX_TOTAL_SIZE = 500 * 1024 * 1024; // 500 MB
 const MAX_FILE_SIZE = 250 * 1024 * 1024; // 250 MB per file
-const ALLOWED_EXTENSIONS = ['.exe', '.msi', '.zip', '.json'];
+const ALLOWED_EXTENSIONS = ['.exe', '.msi', '.zip'];
 const UPLOAD_TIMEOUT_MS = 600_000; // 10 min for large file uploads
 const API_TIMEOUT_MS = 30_000;    // 30s for API calls
 
@@ -92,6 +92,98 @@ function initSourceTypeSwitch(): void {
             hideElement(uploadSection);
         }
     });
+}
+
+// ── Metadata form conditional fields ────────────────────────────────
+function initMetadataForm(): void {
+    const installerType = getEl<HTMLSelectElement>('metaInstallerType');
+    const msiSection = getEl('msiProductCodeSection');
+    const detectionType = getEl<HTMLSelectElement>('metaDetectionType');
+    const registryFields = getEl('registryDetectionFields');
+
+    installerType?.addEventListener('change', () => {
+        if (installerType.value === 'MSI') {
+            showElement(msiSection);
+        } else {
+            hideElement(msiSection);
+        }
+    });
+
+    detectionType?.addEventListener('change', () => {
+        if (detectionType.value === 'registry') {
+            showElement(registryFields);
+        } else {
+            hideElement(registryFields);
+        }
+    });
+}
+
+// ── Build release-metadata.json from form fields ────────────────────
+function buildMetadataJson(): { json: string; errors: string[] } {
+    const errors: string[] = [];
+    const val = (id: string) => (getEl<HTMLInputElement>(id)?.value ?? '').trim();
+    const selVal = (id: string) => (getEl<HTMLSelectElement>(id)?.value ?? '').trim();
+
+    const applicationName = val('metaAppName');
+    const anNumber = val('metaAnNumber');
+    const releaseVersion = val('metaVersion');
+    const installerType = selVal('metaInstallerType');
+    const installCommand = val('metaInstallCmd');
+    const uninstallCommand = val('metaUninstallCmd');
+    const detectionType = selVal('metaDetectionType');
+    const publisher = val('metaPublisher') || 'Nouryon';
+    const uatGroup = val('metaUatGroup');
+    const dependencies = val('metaDependencies') || 'none';
+    const supersedence = val('metaSupersedence') || 'none';
+
+    if (!applicationName) errors.push('Application Name is required.');
+    if (!anNumber) errors.push('AN Number is required.');
+    if (!releaseVersion) errors.push('Release Version is required.');
+    if (!installerType) errors.push('Installer Type is required.');
+    if (!installCommand) errors.push('Install Command is required.');
+    if (!uninstallCommand) errors.push('Uninstall Command is required.');
+    if (!detectionType) errors.push('Detection Type is required.');
+    if (!uatGroup) errors.push('UAT Group is required.');
+
+    const metadata: Record<string, string> = {
+        applicationName,
+        anNumber,
+        releaseVersion,
+        installerType,
+        installCommand,
+        uninstallCommand,
+        detectionType,
+        publisher,
+        uatGroup,
+        dependencies,
+        supersedence,
+    };
+
+    if (installerType === 'MSI') {
+        const msiProductCode = val('metaMsiProductCode');
+        if (!msiProductCode) errors.push('MSI Product Code is required for MSI installers.');
+        metadata.msiProductCode = msiProductCode;
+    }
+
+    if (detectionType === 'registry') {
+        const registryHive = selVal('metaRegHive');
+        const registryPath = val('metaRegPath');
+        const registryArchitecture = selVal('metaRegArch');
+        const registryRuleType = selVal('metaRegRuleType');
+        const registryValueName = val('metaRegValueName');
+        const registryExpectedValue = val('metaRegExpectedValue');
+
+        if (!registryPath) errors.push('Registry Path is required for registry detection.');
+
+        metadata.registryHive = registryHive;
+        metadata.registryPath = registryPath;
+        metadata.registryArchitecture = registryArchitecture;
+        metadata.registryRuleType = registryRuleType;
+        if (registryValueName) metadata.registryValueName = registryValueName;
+        if (registryExpectedValue) metadata.registryExpectedValue = registryExpectedValue;
+    }
+
+    return { json: JSON.stringify(metadata, null, 2), errors };
 }
 
 // ── File upload UI ──────────────────────────────────────────────────
@@ -284,7 +376,7 @@ function validateForm(): boolean {
         // Validate file selection
         if (selectedFiles.length === 0) {
             if (uploadError) {
-                uploadError.textContent = 'Please select at least one file to upload.';
+                uploadError.textContent = 'Please select at least one installer file to upload.';
                 showElement(uploadError);
             }
             valid = false;
@@ -292,6 +384,19 @@ function validateForm(): boolean {
         const totalSize = selectedFiles.reduce((sum, f) => sum + f.size, 0);
         if (totalSize > MAX_TOTAL_SIZE) {
             valid = false;
+        }
+
+        // Validate metadata form
+        const metadataError = getEl('metadataError');
+        const { errors: metaErrors } = buildMetadataJson();
+        if (metaErrors.length > 0) {
+            if (metadataError) {
+                metadataError.textContent = metaErrors[0];
+                showElement(metadataError);
+            }
+            valid = false;
+        } else {
+            hideElement(metadataError);
         }
     } else {
         // Validate release folder path
@@ -352,6 +457,11 @@ function uploadFiles(): Promise<UploadResponse> {
         for (const file of selectedFiles) {
             formData.append('files', file);
         }
+
+        // Auto-generate and append release-metadata.json
+        const { json: metadataJson } = buildMetadataJson();
+        const metadataBlob = new Blob([metadataJson], { type: 'application/json' });
+        formData.append('files', metadataBlob, 'release-metadata.json');
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/api/packaging/upload');
@@ -506,6 +616,7 @@ function initNewRunForm(): void {
     initToggle();
     initSourceTypeSwitch();
     initFileUpload();
+    initMetadataForm();
 
     const form = getEl<HTMLFormElement>('newRunForm');
     form?.addEventListener('submit', (e: Event) => {

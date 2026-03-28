@@ -129,9 +129,9 @@
 
                         <!-- File Upload Section (shown for local-upload) -->
                         <div id="uploadSection" class="hidden">
-                            <label class="block text-sm font-medium text-neutral-700 mb-1">Upload Files</label>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1">Upload Installer</label>
                             <div id="dropZone" class="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary transition cursor-pointer">
-                                <input type="file" id="fileInput" multiple accept=".exe,.msi,.zip,.json" class="hidden" />
+                                <input type="file" id="fileInput" multiple accept=".exe,.msi,.zip" class="hidden" />
                                 <svg class="mx-auto h-10 w-10 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -141,7 +141,7 @@
                                     <span class="text-primary font-medium">Click to browse</span> or drag and drop
                                 </p>
                                 <p class="mt-1 text-xs text-neutral-500">
-                                    EXE, MSI, ZIP, or JSON files (max 500 MB total)
+                                    EXE, MSI, or ZIP files (max 500 MB total)
                                 </p>
                             </div>
                             <div id="fileList" class="mt-3 space-y-2 hidden"></div>
@@ -154,6 +154,142 @@
                                     </div>
                                     <span id="uploadProgressText" class="text-xs text-neutral-500">0%</span>
                                 </div>
+                            </div>
+
+                            <!-- Metadata Form (auto-generates release-metadata.json) -->
+                            <div class="mt-4 border-t border-neutral-200 pt-4">
+                                <h3 class="text-sm font-semibold text-neutral-900 mb-3">Application Metadata</h3>
+                                <p class="text-xs text-neutral-500 mb-4">This information will be used to generate the required <code class="bg-neutral-100 px-1 rounded">release-metadata.json</code> file automatically.</p>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <!-- Application Name -->
+                                    <div>
+                                        <label for="metaAppName" class="block text-xs font-medium text-neutral-600 mb-1">Application Name <span class="text-red-500">*</span></label>
+                                        <input id="metaAppName" type="text" placeholder="e.g. Discord"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- AN Number -->
+                                    <div>
+                                        <label for="metaAnNumber" class="block text-xs font-medium text-neutral-600 mb-1">AN Number <span class="text-red-500">*</span></label>
+                                        <input id="metaAnNumber" type="text" placeholder="e.g. AN12345"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- Release Version -->
+                                    <div>
+                                        <label for="metaVersion" class="block text-xs font-medium text-neutral-600 mb-1">Release Version <span class="text-red-500">*</span></label>
+                                        <input id="metaVersion" type="text" placeholder="e.g. 1.0.0"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- Installer Type -->
+                                    <div>
+                                        <label for="metaInstallerType" class="block text-xs font-medium text-neutral-600 mb-1">Installer Type <span class="text-red-500">*</span></label>
+                                        <select id="metaInstallerType"
+                                                class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+                                            <option value="">Select…</option>
+                                            <option value="EXE">EXE</option>
+                                            <option value="MSI">MSI</option>
+                                            <option value="ZIP">ZIP</option>
+                                        </select>
+                                    </div>
+                                    <!-- MSI Product Code (shown only when MSI) -->
+                                    <div id="msiProductCodeSection" class="hidden sm:col-span-2">
+                                        <label for="metaMsiProductCode" class="block text-xs font-medium text-neutral-600 mb-1">MSI Product Code <span class="text-red-500">*</span></label>
+                                        <input id="metaMsiProductCode" type="text" placeholder="e.g. {12345678-1234-1234-1234-123456789ABC}"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- Publisher -->
+                                    <div>
+                                        <label for="metaPublisher" class="block text-xs font-medium text-neutral-600 mb-1">Publisher</label>
+                                        <input id="metaPublisher" type="text" value="Nouryon"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- UAT Group -->
+                                    <div>
+                                        <label for="metaUatGroup" class="block text-xs font-medium text-neutral-600 mb-1">UAT Group <span class="text-red-500">*</span></label>
+                                        <input id="metaUatGroup" type="text" placeholder="e.g. IT-TestGroup"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- Install Command -->
+                                    <div class="sm:col-span-2">
+                                        <label for="metaInstallCmd" class="block text-xs font-medium text-neutral-600 mb-1">Install Command <span class="text-red-500">*</span></label>
+                                        <input id="metaInstallCmd" type="text" placeholder="e.g. DiscordSetup.exe /S"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- Uninstall Command -->
+                                    <div class="sm:col-span-2">
+                                        <label for="metaUninstallCmd" class="block text-xs font-medium text-neutral-600 mb-1">Uninstall Command <span class="text-red-500">*</span></label>
+                                        <input id="metaUninstallCmd" type="text" placeholder="e.g. DiscordSetup.exe /S /uninstall"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- Detection Type -->
+                                    <div class="sm:col-span-2">
+                                        <label for="metaDetectionType" class="block text-xs font-medium text-neutral-600 mb-1">Detection Type <span class="text-red-500">*</span></label>
+                                        <select id="metaDetectionType"
+                                                class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+                                            <option value="">Select…</option>
+                                            <option value="registry">Registry</option>
+                                            <option value="msi">MSI Product Code</option>
+                                            <option value="file">File/Folder Exists</option>
+                                        </select>
+                                    </div>
+                                    <!-- Registry Detection Fields (shown when detectionType=registry) -->
+                                    <div id="registryDetectionFields" class="hidden sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="metaRegHive" class="block text-xs font-medium text-neutral-600 mb-1">Registry Hive <span class="text-red-500">*</span></label>
+                                            <select id="metaRegHive"
+                                                    class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+                                                <option value="HKLM">HKLM</option>
+                                                <option value="HKCU">HKCU</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="metaRegArch" class="block text-xs font-medium text-neutral-600 mb-1">Architecture <span class="text-red-500">*</span></label>
+                                            <select id="metaRegArch"
+                                                    class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+                                                <option value="x64">x64</option>
+                                                <option value="x86">x86</option>
+                                                <option value="both">Both</option>
+                                            </select>
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label for="metaRegPath" class="block text-xs font-medium text-neutral-600 mb-1">Registry Path <span class="text-red-500">*</span></label>
+                                            <input id="metaRegPath" type="text" placeholder="e.g. SOFTWARE\\Discord"
+                                                   class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                        </div>
+                                        <div>
+                                            <label for="metaRegRuleType" class="block text-xs font-medium text-neutral-600 mb-1">Rule Type <span class="text-red-500">*</span></label>
+                                            <select id="metaRegRuleType"
+                                                    class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition">
+                                                <option value="exists">Key Exists</option>
+                                                <option value="string">String Comparison</option>
+                                                <option value="version">Version Comparison</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="metaRegValueName" class="block text-xs font-medium text-neutral-600 mb-1">Value Name</label>
+                                            <input id="metaRegValueName" type="text" placeholder="e.g. DisplayVersion"
+                                                   class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label for="metaRegExpectedValue" class="block text-xs font-medium text-neutral-600 mb-1">Expected Value</label>
+                                            <input id="metaRegExpectedValue" type="text" placeholder="e.g. 1.0.0"
+                                                   class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                        </div>
+                                    </div>
+                                    <!-- Dependencies -->
+                                    <div>
+                                        <label for="metaDependencies" class="block text-xs font-medium text-neutral-600 mb-1">Dependencies <span class="text-red-500">*</span></label>
+                                        <input id="metaDependencies" type="text" value="none" placeholder="none or AppName|Version"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                    <!-- Supersedence -->
+                                    <div>
+                                        <label for="metaSupersedence" class="block text-xs font-medium text-neutral-600 mb-1">Supersedence <span class="text-red-500">*</span></label>
+                                        <input id="metaSupersedence" type="text" value="none" placeholder="none or AppName|Version"
+                                               class="w-full bg-white border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                                    </div>
+                                </div>
+                                <p id="metadataError" class="mt-2 text-xs text-red-600 hidden"></p>
                             </div>
                         </div>
 
